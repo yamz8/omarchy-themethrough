@@ -33,6 +33,47 @@ const STROKES = {
   Y: [[0.10, 0.12], [0.48, 0.52], [0.50, 0.90], [0.70, 0.54], [0.90, 0.12]],
 }
 
+/**
+ * Round the hand-placed corners out of a path.
+ *
+ * The strokes are written like handwriting, so they contain near-reversals —
+ * the bowl of an R doubling back to its stem, the zigzag of an M. Run straight
+ * through a spline those become corners the camera snaps around. Resampling
+ * and box-blurring the points bounds the curvature instead, at the cost of a
+ * little fidelity to the letterform.
+ */
+function smoothPath(curve, samples = 600, radius = 7, passes = 2) {
+  let pts = []
+  for (let i = 0; i <= samples; i++) pts.push(curve.getPointAt(i / samples))
+
+  for (let p = 0; p < passes; p++) {
+    const out = []
+    for (let i = 0; i < pts.length; i++) {
+      const acc = new THREE.Vector3()
+      let n = 0
+      for (let k = -radius; k <= radius; k++) {
+        const j = i + k
+        if (j < 0 || j >= pts.length) continue
+        acc.add(pts[j])
+        n++
+      }
+      out.push(acc.divideScalar(n))
+    }
+    // Pin the ends so smoothing doesn't shorten the run in or out.
+    out[0] = pts[0]
+    out[out.length - 1] = pts[pts.length - 1]
+    pts = out
+  }
+
+  // Centripetal parameterisation: no cusps or overshoot between samples.
+  const smoothed = new THREE.CatmullRomCurve3(pts, false, 'centripetal')
+  // The default 200-step arc-length table makes speed stutter on a path this
+  // wiggly; a finer table keeps the drive at an even pace.
+  smoothed.arcLengthDivisions = 4000
+  smoothed.updateArcLengths()
+  return smoothed
+}
+
 function buildRoute() {
   const pts = []
   for (const letter of wordmark.letters) {
@@ -46,7 +87,7 @@ function buildRoute() {
       ))
     }
   }
-  return new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.35)
+  return smoothPath(new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.35))
 }
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z)
@@ -74,7 +115,7 @@ export function buildShots() {
       caption: { title: 'OMARCHY', sub: 'every theme, laid into the wordmark' },
     },
     // The drive: the route as written, through the middle of the word.
-    { dur: 9.0, ease: 'linear', drive: [0.30, 0.52] },
+    { dur: 9.5, ease: 'linear', drive: [0.31, 0.47] },
     // Break out: rise off the surface and let the whole shape land.
     {
       dur: 5.5, ease: 'easeInOut',
@@ -90,7 +131,7 @@ export function buildShots() {
       caption: { title: '71 backgrounds', sub: 'each one whole, each one once' },
     },
     // Low again, over the brightest stretch of the word.
-    { dur: 7.0, ease: 'linear', drive: [0.72, 0.88] },
+    { dur: 7.5, ease: 'linear', drive: [0.73, 0.86] },
     // Hero: the three-quarter push-in.
     {
       dur: 6.0, ease: 'easeOut',
@@ -118,6 +159,11 @@ export class Director {
     this.startedAt = 0
     this.shotIndex = -1
 
+    // Smoothed aim for the driving shots, and the frame clock that drives it.
+    this.aim = new THREE.Vector3()
+    this.aimLive = false
+    this.lastFrame = 0
+
     this.onShot = () => {}
     this.onEnd = () => {}
   }
@@ -139,6 +185,18 @@ export class Director {
     return new THREE.Vector3(v.x, y, v.z)
   }
 
+  /**
+   * Where a driving shot looks: the average of several points up the road
+   * rather than a single one. A lone look-ahead point sitting on the same
+   * curve swings hard through every bend, which is what made the drive snap.
+   */
+  aimAhead(u) {
+    const acc = new THREE.Vector3()
+    const offsets = [0.020, 0.035, 0.052, 0.072, 0.095]
+    for (const d of offsets) acc.add(this.route.getPointAt(Math.min(u + d, 1)))
+    return acc.divideScalar(offsets.length)
+  }
+
   /** The still we hold on before the film starts and after it ends. */
   poster() {
     const last = this.shots[this.shots.length - 1]
@@ -146,14 +204,19 @@ export class Director {
   }
 
   update() {
+    const now = performance.now()
+    const dt = this.lastFrame ? Math.min((now - this.lastFrame) / 1000, 0.1) : 1 / 60
+    this.lastFrame = now
+
     let pos, target
+    let cut = false
 
     if (!this.playing) {
       const p = this.poster()
       pos = p.pos
       target = p.target
     } else {
-      let time = (performance.now() - this.startedAt) / 1000
+      let time = (now - this.startedAt) / 1000
       if (time >= this.total) {
         this.playing = false
         this.onEnd()
@@ -169,6 +232,7 @@ export class Director {
         const shot = this.shots[i]
         if (i !== this.shotIndex) {
           this.shotIndex = i
+          cut = true
           this.onShot(shot, i)
         }
         const k = (EASES[shot.ease] ?? linear)(Math.min(time / shot.dur, 1))
@@ -176,10 +240,22 @@ export class Director {
         if (shot.drive) {
           const u = THREE.MathUtils.lerp(shot.drive[0], shot.drive[1], k)
           pos = this.route.getPointAt(u)
-          target = this.route.getPointAt(Math.min(u + 0.035, 1))
-          pos.y = 7.5
-          target.y = 1.4
+          pos.y = 8.5
+
+          const desired = this.aimAhead(u)
+          desired.y = 1.2
+          if (!this.aimLive || cut) {
+            // Snap on a cut: the join should be an edit, not a swing.
+            this.aim.copy(desired)
+            this.aimLive = true
+          } else {
+            // Frame-rate independent damping, so the aim eases through bends
+            // at the same rate whatever the frame rate.
+            this.aim.lerp(desired, 1 - Math.exp(-3.2 * dt))
+          }
+          target = this.aim
         } else {
+          this.aimLive = false
           pos = this.point(shot.a.p).lerp(this.point(shot.b.p), k)
           target = this.point(shot.a.t).lerp(this.point(shot.b.t), k)
         }
@@ -191,7 +267,7 @@ export class Director {
     // vector toward -z — but only as the camera actually approaches vertical.
     // Blending it in any earlier rolls the horizon during the low shots.
     const dir = target.clone().sub(pos).normalize()
-    const tilt = THREE.MathUtils.smoothstep(Math.abs(dir.y), 0.92, 0.999)
+    const tilt = THREE.MathUtils.smoothstep(Math.abs(dir.y), 0.75, 0.998)
     this.camera.up.set(0, 1 - tilt, -tilt).normalize()
     this.camera.lookAt(target)
   }

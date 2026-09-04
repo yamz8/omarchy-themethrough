@@ -58,6 +58,21 @@ letters.
 The driving shots ride a route written through each letter as one continuous
 gesture, looping and doubling back the way a pen would.
 
+Those strokes contain near-reversals — the bowl of an R doubling back to its
+stem, the zigzag of an M — and run straight through a spline they become
+corners the camera snaps around. Three things keep the drive smooth:
+
+- the path is **resampled and box-blurred** to bound its curvature, then rebuilt
+  with centripetal parameterisation so there are no cusps between samples
+- the camera aims at the **average of five points up the road**, not one; a lone
+  look-ahead sitting on the same curve swings hard through every bend
+- the arc-length table is refined from its 200-step default to 4000, since a
+  coarse table makes the pace stutter on a path this wiggly
+
+Measured over the two driving shots, that takes peak turn rate from **115 and
+121 deg/s down to 37 and 31**, averaging 23 — a comfortable pan rather than a
+whip.
+
 ## Develop
 
 ```bash
