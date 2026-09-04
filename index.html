@@ -3,11 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>omarchy-themethrough</title>
+    <meta name="description" content="The Omarchy wordmark, laid on the floor and filled with every theme's backgrounds." />
+    <title>omarchy · themethrough</title>
   </head>
   <body>
     <canvas id="scene"></canvas>
-    <div id="hud">drag to orbit &middot; scroll to zoom</div>
+
+    <div id="overlay">
+      <div id="letter-label"></div>
+      <div id="theme-label"></div>
+    </div>
+
+    <div id="hud">
+      <div id="status">loading themes</div>
+      <button id="enter" type="button">
+        <span class="chevron">&darr;</span>
+        <span>descend</span>
+      </button>
+    </div>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

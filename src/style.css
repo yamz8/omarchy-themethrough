@@ -1,39 +1,113 @@
 :root {
   color-scheme: dark;
+  --ink: rgba(255, 255, 255, 0.62);
+  --ink-dim: rgba(255, 255, 255, 0.34);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-html,
-body {
+html, body {
   height: 100%;
   overflow: hidden;
-  background: #0b0d12;
+  background: #08090c;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-#scene {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
+#scene { display: block; width: 100%; height: 100%; }
 
+/* --- bottom control --- */
 #hud {
   position: fixed;
-  bottom: 1.25rem;
+  bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  padding: 0.5rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  transition: opacity 0.6s ease;
+}
+
+body.touring #hud { opacity: 0; pointer-events: none; }
+
+#status {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  min-height: 1em;
+}
+
+#enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.6rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.82);
+  font: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0;
+  transition: background 0.25s ease, border-color 0.25s ease, opacity 0.8s ease;
+}
+
+body.ready #enter { opacity: 1; }
+
+#enter:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+#enter:disabled { cursor: default; opacity: 0.35; }
+
+.chevron {
+  font-size: 1rem;
+  line-height: 1;
+  animation: nudge 2.2s ease-in-out infinite;
+}
+
+@keyframes nudge {
+  0%, 100% { transform: translateY(-1px); }
+  50% { transform: translateY(2px); }
+}
+
+/* --- letter / theme readout during the flight --- */
+#overlay {
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
   pointer-events: none;
-  user-select: none;
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+
+body.touring #overlay { opacity: 1; }
+
+#letter-label {
+  font-size: 3.4rem;
+  line-height: 1;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+#theme-label {
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  #letter-label { font-size: 2.2rem; }
+  #theme-label { font-size: 0.62rem; }
+  #overlay { top: 1.2rem; left: 1.2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron { animation: none; }
 }

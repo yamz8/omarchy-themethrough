@@ -1,0 +1,270 @@
+[
+ {
+  "name": "catppuccin",
+  "accent": "#89b4fa",
+  "bg": "#1e1e2e",
+  "mode": "dark",
+  "images": [
+   "1-totoro.webp",
+   "2-waves.webp",
+   "3-blue-eye.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "catppuccin-latte",
+  "accent": "#1e66f5",
+  "bg": "#eff1f5",
+  "mode": "light",
+  "images": [
+   "1-color-fade.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "ethereal",
+  "accent": "#7d82d9",
+  "bg": "#060B1E",
+  "mode": "dark",
+  "images": [
+   "1-cosmic.webp",
+   "2-meadow.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "everforest",
+  "accent": "#7fbbb3",
+  "bg": "#2d353b",
+  "mode": "dark",
+  "images": [
+   "1-tree-tops.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "flexoki-light",
+  "accent": "#205EA6",
+  "bg": "#FFFCF0",
+  "mode": "light",
+  "images": [
+   "1-orb.webp",
+   "2-omarchy.webp"
+  ]
+ },
+ {
+  "name": "gruvbox",
+  "accent": "#7daea3",
+  "bg": "#282828",
+  "mode": "dark",
+  "images": [
+   "1-the-backwater.webp",
+   "2-flower-basket.webp",
+   "3-village-square.webp",
+   "4-idyllic-procession.webp",
+   "5-leaves.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "hackerman",
+  "accent": "#82FB9C",
+  "bg": "#0B0C16",
+  "mode": "dark",
+  "images": [
+   "1-synth-scape.webp",
+   "2-geometric.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "kanagawa",
+  "accent": "#dcd7ba",
+  "bg": "#1f1f28",
+  "mode": "dark",
+  "images": [
+   "1-kanagawa.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "last-horizon",
+  "accent": "#b59790",
+  "bg": "#0c0b0c",
+  "mode": "dark",
+  "images": [
+   "1-eyes-wide.webp",
+   "2-blink.webp",
+   "3-bokeh.webp",
+   "4-new-horizons.webp"
+  ]
+ },
+ {
+  "name": "lumon",
+  "accent": "#8bc9eb",
+  "bg": "#16242d",
+  "mode": "dark",
+  "images": [
+   "01-united-in-severance.webp",
+   "02-opinions-equally.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "lupine",
+  "accent": "#3264eb",
+  "bg": "#fafafa",
+  "mode": "light",
+  "images": [
+   "01-cherry-blossom-bokeh.webp",
+   "02-cherry-blossom-white.webp",
+   "03-pastel-clouds.webp",
+   "04-elegant-blue-wave.webp",
+   "05-abstract-wave.webp",
+   "06-omarchy.webp"
+  ]
+ },
+ {
+  "name": "matte-black",
+  "accent": "#e68e0d",
+  "bg": "#121212",
+  "mode": "dark",
+  "images": [
+   "0-ship-at-sea.webp",
+   "1-dark-waters.webp",
+   "2-dot-hands.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "miasma",
+  "accent": "#78824b",
+  "bg": "#222222",
+  "mode": "dark",
+  "images": [
+   "01-nature-of-fear.webp",
+   "02-crowned.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "nord",
+  "accent": "#81a1c1",
+  "bg": "#2e3440",
+  "mode": "dark",
+  "images": [
+   "0-black-moon.webp",
+   "1-city-view.webp",
+   "2-night-hawks.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "osaka-jade",
+  "accent": "#509475",
+  "bg": "#111c18",
+  "mode": "dark",
+  "images": [
+   "1-glowing-city.webp",
+   "2-shaded-entrance.webp",
+   "3-mountain-moon.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "retro-82",
+  "accent": "#faa968",
+  "bg": "#05182e",
+  "mode": "dark",
+  "images": [
+   "1-in-the-groove.webp",
+   "2-dusk-guardian.webp",
+   "3-glassy-lines.webp",
+   "4-gateway.webp",
+   "5-zen-boat.webp",
+   "6-abstract-pyramids.webp",
+   "7-the-journey.webp",
+   "8-glitter-glass.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "ristretto",
+  "accent": "#f38d70",
+  "bg": "#2c2525",
+  "mode": "dark",
+  "images": [
+   "0-launch.webp",
+   "1-color-curves.webp",
+   "2-coffee-beans.webp",
+   "3-industrial-moon.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "rose-pine",
+  "accent": "#56949f",
+  "bg": "#faf4ed",
+  "mode": "light",
+  "images": [
+   "1-funky-shapes.webp",
+   "2-dot-map.webp",
+   "3-omarchy-plants.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "solitude",
+  "accent": "#798186",
+  "bg": "#101315",
+  "mode": "dark",
+  "images": [
+   "1-on-pole.webp",
+   "2-wreakage.webp",
+   "3-climb.webp",
+   "4-ether.webp",
+   "5-eyed.webp"
+  ]
+ },
+ {
+  "name": "tokyo-night",
+  "accent": "#7aa2f7",
+  "bg": "#1a1b26",
+  "mode": "dark",
+  "images": [
+   "0-winding-road.webp",
+   "1-quattro.webp",
+   "2-swirl-buck.webp",
+   "3-sunset-lake.webp",
+   "4-omakub.webp",
+   "5-oma-cityscape.webp",
+   "6-oma.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "vantablack",
+  "accent": "#8d8d8d",
+  "bg": "#000000",
+  "mode": "dark",
+  "images": [
+   "0-dot-hands.webp",
+   "1-twisted-stairs.webp",
+   "2-layers-deep.webp",
+   "3-layers-stacked.webp",
+   "omarchy.webp"
+  ]
+ },
+ {
+  "name": "white",
+  "accent": "#6e6e6e",
+  "bg": "#ffffff",
+  "mode": "light",
+  "images": [
+   "1-white.webp",
+   "2-white.webp",
+   "3-white.webp",
+   "omarchy.webp"
+  ]
+ }
+]
