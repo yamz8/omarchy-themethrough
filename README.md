@@ -6,6 +6,29 @@ descend and fly the length of the word before rising back to where you started.
 
 **Live: https://yamz8.github.io/omarchy-themethrough/**
 
+## The film
+
+The page is a piece of film and plays itself once the last background loads.
+It runs as a **cut list**, not one endless glide — eight shots, each a move
+from one framing to another, with the camera jumping between them so the joins
+read as edits:
+
+1. **Cold open** — down among the pictures, drifting, before you know what it is
+2. **Title** — still low, still moving, as `OMARCHY` comes up
+3. **The drive** — the written route, through the middle of the word
+4. **Break out** — rise off the surface and let the whole shape land
+5. **Overhead** — drifting slowly across the word
+6. **Low again** — over the brightest stretch
+7. **Hero** — the three-quarter push-in
+8. **Sign-off** — settle overhead and hold on the name
+
+Letterbox bars slide in for the duration and retract at the end, the closing
+card holds, and `replay` sits clear of it in the opposite corner. A vignette
+and a cool lift are laid over the canvas so it reads as graded footage.
+
+Shot timings run on wall-clock time rather than accumulated frame deltas, so a
+throttled or backgrounded tab can't fall behind the cut.
+
 ## How it works
 
 The wordmark is pixel art on an **81 × 19** grid. `tools/generate-assets.js`
@@ -20,8 +43,7 @@ The letters lie flat on the floor and are tiled with square **image blocks** —
 3×3 cells where they fit, 2×2 where a letter has more images to show than room
 for big ones. A block only ever sits on cells that are all solid letter, so the
 background drawn across it is shown **whole**: the letter outline never crops a
-picture. Each of the **71 backgrounds appears exactly once** — nothing repeats,
-and nothing animates.
+picture. Each of the **71 backgrounds appears exactly once** — nothing repeats.
 
 Square uncropped tiles can only cover about 78% of a letter, so the rest shows
 as mat in the theme's `accent`. Every uncovered cell goes to the nearest theme
@@ -33,12 +55,8 @@ The generator skips the branded wallpapers whose filenames contain `omarchy`:
 they are the wordmark on a flat ground, and read as blank tiles laid into the
 letters.
 
-The camera opens overhead, framed to the viewport, then **drives the word like
-a road**. The route is written through each letter as one continuous gesture —
-looping and doubling back the way a pen would, not a straight pass down the
-word — and the camera rides it at constant speed, low and looking a short way
-ahead. Phases run on wall-clock time rather than accumulated frame deltas, so a
-throttled or backgrounded tab can't fall behind.
+The driving shots ride a route written through each letter as one continuous
+gesture, looping and doubling back the way a pen would.
 
 ## Develop
 

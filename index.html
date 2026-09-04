@@ -9,19 +9,24 @@
   <body>
     <canvas id="scene"></canvas>
 
-    <div id="overlay">
-      <div id="letter-label"></div>
-      <div id="theme-label"></div>
+    <div id="grade"></div>
+    <div id="bar-top" class="bar"></div>
+    <div id="bar-bottom" class="bar"></div>
+
+    <div id="caption">
+      <div id="caption-title"></div>
+      <div id="caption-sub"></div>
     </div>
+
+    <div id="fade"></div>
 
     <div id="hud">
-      <div id="status">loading themes</div>
-      <button id="enter" type="button">
-        <span class="chevron">&darr;</span>
-        <span>descend</span>
+      <div id="status">loading</div>
+      <button id="play" type="button">
+        <span class="glyph">&#9654;</span>
+        <span class="label">play</span>
       </button>
     </div>
-
-    <script type="module" src="/src/main.js"></script>
   </body>
+  <script type="module" src="/src/main.js"></script>
 </html>
