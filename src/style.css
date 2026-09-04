@@ -41,38 +41,6 @@ html, body {
 
 body.rolling .bar { height: var(--bar); }
 
-/* --- title cards --- */
-#caption {
-  position: fixed;
-  left: clamp(1.5rem, 5vw, 5rem);
-  bottom: calc(var(--bar) + clamp(1.5rem, 5vh, 3.5rem));
-  z-index: 4;
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-body.captioned #caption { opacity: 1; transform: translateY(0); }
-
-#caption-title {
-  font-size: clamp(1.6rem, 4.6vw, 3.4rem);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  line-height: 1;
-  color: #fff;
-  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.65);
-}
-
-#caption-sub {
-  margin-top: 0.7rem;
-  font-size: clamp(0.62rem, 1.35vw, 0.84rem);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.62);
-  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.8);
-}
-
 /* --- open/close fade --- */
 #fade {
   position: fixed;
@@ -138,5 +106,5 @@ body.ready #play { opacity: 1; }
 .glyph { font-size: 0.7rem; line-height: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .bar, #caption, #fade { transition-duration: 0.01ms; }
+  .bar, #fade { transition-duration: 0.01ms; }
 }

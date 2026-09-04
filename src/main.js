@@ -31,9 +31,6 @@ floor.rotation.x = -Math.PI / 2
 floor.position.y = -0.02
 scene.add(floor)
 
-const grid = new THREE.GridHelper(800, 200, 0x171c28, 0x0f121a)
-scene.add(grid)
-
 // --- build the wordmark ---
 const clusters = buildLayout(themes)
 const wordGroup = new THREE.Group()
@@ -100,33 +97,8 @@ Promise.all(pending).then(() => {
 // --- the film ---
 const playButton = document.querySelector('#play')
 const playLabel = playButton.querySelector('.label')
-const caption = document.querySelector('#caption')
-const captionTitle = document.querySelector('#caption-title')
-const captionSub = document.querySelector('#caption-sub')
-
-let captionTimer = null
-
-function showCaption(text) {
-  clearTimeout(captionTimer)
-  if (!text) {
-    document.body.classList.remove('captioned')
-    return
-  }
-  // Let the old card clear before the new one rises, so cards never crossfade
-  // into each other mid-shot.
-  document.body.classList.remove('captioned')
-  captionTimer = setTimeout(() => {
-    captionTitle.textContent = text.title
-    captionSub.textContent = text.sub ?? ''
-    document.body.classList.add('captioned')
-  }, 260)
-}
-
-director.onShot = (shot) => showCaption(shot.caption)
-
 director.onEnd = () => {
-  // Hold the end card and stay on the closing frame — the sign-off is the last
-  // thing the film says, so it shouldn't blink out with the letterbox.
+  // Stay on the closing frame; only the letterbox retracts.
   document.body.classList.remove('rolling')
   playLabel.textContent = 'replay'
 }

@@ -112,7 +112,6 @@ export function buildShots() {
       dur: 5.0, ease: 'linear',
       a: { p: V(L.M - 9, 3.2, 10), t: V(L.M, 0.6, 2) },
       b: { p: V(L.M + 4, 3.6, 7), t: V(L.M + 13, 0.6, 0) },
-      caption: { title: 'OMARCHY', sub: 'every theme, laid into the wordmark' },
     },
     // The drive: the route as written, through the middle of the word.
     { dur: 9.5, ease: 'linear', drive: [0.31, 0.47] },
@@ -121,14 +120,12 @@ export function buildShots() {
       dur: 5.5, ease: 'easeInOut',
       a: { p: V(L.R, 7, 16), t: V(L.R + 6, 0.5, 2) },
       b: { p: V(0, 'over', 0), t: V(0, 0, 0) },
-      caption: { title: '22 themes', sub: 'catppuccin · gruvbox · nord · tokyo-night · …' },
     },
     // Overhead, drifting slowly across the word.
     {
       dur: 5.5, ease: 'linear',
       a: { p: V(-13, 'over', 0), t: V(-13, 0, 0) },
       b: { p: V(13, 'over', 0), t: V(13, 0, 0) },
-      caption: { title: '71 backgrounds', sub: 'each one whole, each one once' },
     },
     // Low again, over the brightest stretch of the word.
     { dur: 7.5, ease: 'linear', drive: [0.73, 0.86] },
@@ -143,7 +140,6 @@ export function buildShots() {
       dur: 6.5, ease: 'easeInOut',
       a: { p: V(0, 'over', 26), t: V(0, 0, 3) },
       b: { p: V(0, 'over', 0), t: V(0, 0, 0) },
-      caption: { title: 'OMARCHY', sub: 'yamz8.github.io/omarchy-themethrough' },
     },
   ]
 }
@@ -164,7 +160,6 @@ export class Director {
     this.aimLive = false
     this.lastFrame = 0
 
-    this.onShot = () => {}
     this.onEnd = () => {}
   }
 
@@ -233,7 +228,6 @@ export class Director {
         if (i !== this.shotIndex) {
           this.shotIndex = i
           cut = true
-          this.onShot(shot, i)
         }
         const k = (EASES[shot.ease] ?? linear)(Math.min(time / shot.dur, 1))
 

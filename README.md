@@ -14,7 +14,7 @@ from one framing to another, with the camera jumping between them so the joins
 read as edits:
 
 1. **Cold open** — down among the pictures, drifting, before you know what it is
-2. **Title** — still low, still moving, as `OMARCHY` comes up
+2. **Low move** — still down among them, crossing the M
 3. **The drive** — the written route, through the middle of the word
 4. **Break out** — rise off the surface and let the whole shape land
 5. **Overhead** — drifting slowly across the word
@@ -22,9 +22,9 @@ read as edits:
 7. **Hero** — the three-quarter push-in
 8. **Sign-off** — settle overhead and hold on the name
 
-Letterbox bars slide in for the duration and retract at the end, the closing
-card holds, and `replay` sits clear of it in the opposite corner. A vignette
-and a cool lift are laid over the canvas so it reads as graded footage.
+Letterbox bars slide in for the duration and retract at the end, and a vignette
+and cool lift are laid over the canvas so it reads as graded footage. There is
+no overlay text and no ground grid — the pictures carry it, floating in dark.
 
 Shot timings run on wall-clock time rather than accumulated frame deltas, so a
 throttled or backgrounded tab can't fall behind the cut.
