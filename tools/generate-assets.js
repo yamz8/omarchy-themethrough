@@ -18,7 +18,7 @@ const run = promisify(execFile)
 
 const THEME_DIR = process.env.OMARCHY_THEMES ?? '/usr/share/omarchy/themes'
 const WORDMARK = process.env.OMARCHY_WORDMARK ?? 'assets/omarchy-wordmark.png'
-const SIZE = 1024
+const SIZE = 512
 const ROOT = path.resolve(import.meta.dirname, '..')
 
 /** Letter column ranges within the 81-wide grid, in reading order. */

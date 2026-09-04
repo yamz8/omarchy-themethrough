@@ -16,19 +16,29 @@ split across the seven letters:
 |---|---|---|---|---|---|---|
 | 96 | 147 | 104 | 118 | 87 | 94 | 92 |
 
-Each cell becomes a low extruded block. All **22 themes** are laid across the
-seven letters (M gets four, the rest three) as contiguous vertical bands, so a
-theme always owns an unbroken slice of a letter. One background is mapped
-across each band's bounding box — the letter shape crops the picture — and the
-bands crossfade through the rest of their theme's images as you watch.
+Each cell becomes a low extruded block. Every letter is then tiled with square
+**image blocks** — 3×3 cells where they fit, 2×2 where a letter has more images
+to show than room for. A block only ever sits on cells that are all solid
+letter, so the background drawn across it is shown **whole**: the letter
+outline never crops a picture. All **92 backgrounds** appear, each in its
+entirety.
 
-Blocks only emit side walls where they have no neighbour, so the interior faces
-between adjacent cells are never built. Top faces are unlit, so the wallpapers
-show their true colour; the walls are lit and tinted with the theme's `accent`
-from its `colors.toml`.
+The 22 themes are handed contiguous runs of those blocks, and each letter gets
+a share of the themes in proportion to how many images it can physically hold —
+otherwise a theme can land in a slice too narrow to fit even one block. Slivers
+the blocks can't cover take the theme's `background` colour, lifted toward its
+`accent` so the letter edges stay defined.
 
-The flight runs *in front of* the letters rather than between them: the image
-faces point straight up, so they only stay legible from a raised, tilted view.
+Blocks only emit side walls where they have no neighbour, so interior faces
+between adjacent cells are never built. Image faces are unlit, so the
+wallpapers show their true colour; the walls are lit and tinted with the
+theme's `accent`. Nothing animates or cycles — the layout is static.
+
+The camera opens overhead, framed to the viewport, then drives the length of
+the word at low altitude, so the letter tops read as a road of images passing
+beneath, changing theme letter by letter. Phases run on wall-clock time rather
+than accumulated frame deltas, so a throttled or backgrounded tab can't fall
+behind.
 
 ## Develop
 
@@ -39,8 +49,8 @@ npm run dev
 
 ## Regenerating assets
 
-The 92 backgrounds are read from a local Omarchy install, squared to 1024px and
-compressed to WebP (108 MB → 5.6 MB). Re-run after installing new themes:
+The 92 backgrounds are read from a local Omarchy install, squared to 512px and
+compressed to WebP (108 MB → 1.9 MB). Re-run after installing new themes:
 
 ```bash
 npm run assets    # needs ImageMagick (`magick`) on PATH

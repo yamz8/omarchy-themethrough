@@ -27,37 +27,37 @@ const easeOut = (t) => 1 - Math.pow(1 - t, 3)
 /** Centre x of each letter, in world units. */
 const letterCentres = wordmark.letters.map((l) => cellX((l.c0 + l.c1) / 2))
 
-const ENTRY = letterCentres[0] - 17
-const EXIT = letterCentres[letterCentres.length - 1] + 17
+const ENTRY = letterCentres[0] - 22
+const EXIT = letterCentres[letterCentres.length - 1] + 22
 
-// The flight runs along the front edge of the wordmark rather than through it.
-// Skimming between the blocks sounds good but reads as blank walls: the image
-// faces point straight up, so they only stay legible from a raised, tilted view.
-const FLY_Z = 13
-const FLY_Y = 16
+// Driving height and lane. The camera rides over the wordmark's own centre
+// line, so the letter tops read as the road surface running beneath it.
+const DRIVE_Y = 10.5
+const LOOK_AHEAD = 13
 
-/**
- * The low pass. The camera dollies left to right in front of the letters,
- * rising and easing nearer/further so each one is seen from its own angle.
- */
+/** The drive: straight down the length of the word, gently weaving. */
 function buildPath() {
-  const pts = [new THREE.Vector3(ENTRY, FLY_Y + 2.5, FLY_Z + 4)]
+  const pts = [new THREE.Vector3(ENTRY, DRIVE_Y + 1.5, 1)]
   letterCentres.forEach((x, i) => {
-    const lift = i % 2 === 0 ? -1.4 : 1.6
-    const push = i % 2 === 0 ? 1.5 : -1.8
-    pts.push(new THREE.Vector3(x, FLY_Y + lift, FLY_Z + push))
+    pts.push(new THREE.Vector3(x, DRIVE_Y + (i % 2 === 0 ? -0.8 : 0.9), i % 2 === 0 ? -2.2 : 2.4))
   })
-  pts.push(new THREE.Vector3(EXIT, FLY_Y + 2.5, FLY_Z + 4))
+  pts.push(new THREE.Vector3(EXIT, DRIVE_Y + 1.5, 1))
   return new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.4)
 }
 
-/** The camera looks at each letter in turn, just above the block tops. */
+/**
+ * Aim straight down the road. The look-ahead tracks the camera's own weave
+ * (damped) rather than crossing it — opposing sways would swing the wordmark
+ * off to one side of the frame.
+ */
 function buildLookPath() {
-  const pts = [new THREE.Vector3(ENTRY + 6, HEIGHT, -1)]
-  letterCentres.forEach((x) => {
-    pts.push(new THREE.Vector3(x, HEIGHT * 0.5, -1.5))
+  const pts = [new THREE.Vector3(ENTRY + LOOK_AHEAD, HEIGHT, 1)]
+  letterCentres.forEach((x, i) => {
+    // Same z as the camera, so the aim is purely forward and the word recedes
+    // down the middle of the frame instead of drifting to one side.
+    pts.push(new THREE.Vector3(x + LOOK_AHEAD, HEIGHT, i % 2 === 0 ? -2.2 : 2.4))
   })
-  pts.push(new THREE.Vector3(EXIT - 6, HEIGHT, -1))
+  pts.push(new THREE.Vector3(EXIT + LOOK_AHEAD, HEIGHT, 1))
   return new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.4)
 }
 
@@ -69,6 +69,9 @@ export class CameraRig {
 
     this.state = 'top'
     this.t = 0
+    // Phases run on wall-clock time. Advancing by per-frame deltas would let a
+    // throttled tab (backgrounded, or just a slow frame rate) fall behind.
+    this.startedAt = 0
     this.pos = TOP.pos.clone()
     this.target = TOP.target.clone()
 
@@ -85,12 +88,13 @@ export class CameraRig {
 
   start() {
     if (this.running) return
-    this.setState('descending')
     this.t = 0
+    this.setState('descending')
   }
 
   setState(s) {
     this.state = s
+    this.startedAt = performance.now()
     this.onStateChange(s)
   }
 
@@ -103,49 +107,48 @@ export class CameraRig {
     return { pos: this.path.getPoint(1), target: this.lookPath.getPoint(1) }
   }
 
-  update(dt) {
+  update() {
+    const now = performance.now()
+    const elapsed = (now - this.startedAt) / 1000
+
     if (this.state === 'top') {
       this.pos.copy(TOP.pos)
       this.target.copy(TOP.target)
     } else if (this.state === 'descending') {
-      this.t += dt / this.descendTime
+      this.t = elapsed / this.descendTime
       const k = easeInOut(Math.min(this.t, 1))
       const to = this.tourStart()
       this.pos.copy(TOP.pos).lerp(to.pos, k)
       this.target.copy(TOP.target).lerp(to.target, k)
-      if (this.t >= 1) {
-        this.t = 0
-        this.setState('touring')
-      }
+      if (this.t >= 1) this.setState('touring')
     } else if (this.state === 'touring') {
-      this.t += dt / this.tourTime
+      this.t = elapsed / this.tourTime
       const k = Math.min(this.t, 1)
       // Ease only at the very ends so the middle travels at a steady pace.
-      const e = k < 0.12 ? easeOut(k / 0.12) * 0.12 : k > 0.88 ? 0.88 + (1 - Math.pow(1 - (k - 0.88) / 0.12, 2)) * 0.12 : k
+      const e = k < 0.12
+        ? easeOut(k / 0.12) * 0.12
+        : k > 0.88
+          ? 0.88 + (1 - Math.pow(1 - (k - 0.88) / 0.12, 2)) * 0.12
+          : k
       this.pos.copy(this.path.getPoint(e))
       this.target.copy(this.lookPath.getPoint(e))
-      if (this.t >= 1) {
-        this.t = 0
-        this.setState('ascending')
-      }
+      if (this.t >= 1) this.setState('ascending')
     } else if (this.state === 'ascending') {
-      this.t += dt / this.ascendTime
+      this.t = elapsed / this.ascendTime
       const k = easeInOut(Math.min(this.t, 1))
       const from = this.tourEnd()
       this.pos.copy(from.pos).lerp(TOP.pos, k)
       this.target.copy(from.target).lerp(TOP.target, k)
-      if (this.t >= 1) {
-        this.t = 0
-        this.setState('top')
-      }
+      if (this.t >= 1) { this.t = 0; this.setState('top') }
     }
 
     this.camera.position.copy(this.pos)
     // Looking straight down is degenerate with a +y up vector, so tilt the up
-    // vector toward -z as the camera approaches vertical.
+    // vector toward -z — but only as the camera actually approaches vertical.
+    // Blending it in any earlier rolls the horizon during the low drive.
     const dir = this.target.clone().sub(this.pos).normalize()
-    const vertical = Math.abs(dir.y)
-    this.camera.up.set(0, 1 - vertical, -vertical).normalize()
+    const tilt = THREE.MathUtils.smoothstep(Math.abs(dir.y), 0.92, 0.999)
+    this.camera.up.set(0, 1 - tilt, -tilt).normalize()
     this.camera.lookAt(this.target)
   }
 
