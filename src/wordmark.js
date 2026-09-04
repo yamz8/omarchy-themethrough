@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import wordmark from './wordmark.json'
 
 export const CELL = 1
-export const HEIGHT = 1.15
+export const HEIGHT = 0
 export const COLS = wordmark.cols
 export const ROWS = wordmark.rows
 
@@ -23,7 +23,7 @@ for (const letter of wordmark.letters) {
  * not already taken. A block sits entirely on solid letter, so an image drawn
  * across it is shown whole — the letter outline never clips it.
  */
-function packSlots(cells, size, taken) {
+function packSlots(cells, size, taken, limit = Infinity) {
   const own = new Set(cells.map(([c, r]) => key(c, r)))
   const slots = []
 
@@ -45,52 +45,85 @@ function packSlots(cells, size, taken) {
       if (!ok) continue
       for (let i = 0; i < size; i++) for (let j = 0; j < size; j++) taken.add(key(c + i, r + j))
       slots.push({ c, r, size })
+      if (slots.length >= limit) return slots
     }
   }
   return slots
 }
 
-/**
- * Tile a whole letter with image blocks, in reading order. `mixed` prefers big
- * 3x3 blocks and fills the gaps with 2x2; the 2x2-only mode yields more (but
- * smaller) blocks, for letters that have more images to show than room for.
- */
-function packLetter(cells, mixed) {
-  const taken = new Set()
-  const blocks = mixed
-    ? [...packSlots(cells, 3, taken), ...packSlots(cells, 2, taken)]
-    : packSlots(cells, 2, taken)
-  blocks.sort((a, b) => (a.c - b.c) || (a.r - b.r))
-  return { blocks, taken }
+/** Pick `n` entries spread evenly through a list. */
+function spread(items, n) {
+  if (items.length <= n) return items
+  const out = []
+  for (let i = 0; i < n; i++) out.push(items[Math.round((i * (items.length - 1)) / (n - 1 || 1))])
+  return [...new Set(out)]
 }
 
 /**
- * Give every theme a contiguous run of blocks inside one letter.
+ * Tile a letter with exactly `count` image blocks — one per background, so no
+ * picture is ever repeated.
  *
- * Letters are handed a share of the themes in proportion to how many images
- * they can physically hold, so no theme ends up in a slice too narrow to fit
- * a single block. Spare blocks are shared out so the letters stay filled.
+ * Blocks are made as large as they can be while still producing `count` of
+ * them, because the cells no block covers show as bare mat: too few big blocks
+ * and the letterform breaks up into disconnected strips.
+ */
+function packLetter(cells, count) {
+  const build = (sizes) => {
+    const taken = new Set()
+    const out = []
+    for (const size of sizes) out.push(...packSlots(cells, size, taken))
+    return out
+  }
+
+  // Biggest-first, dropping to smaller blocks only when the letter cannot
+  // otherwise yield enough of them.
+  let blocks = null
+  for (const sizes of [[3, 2], [2], [2, 1], [1]]) {
+    const all = build(sizes)
+    if (all.length < count) continue
+    const big = all.filter((b) => b.size === sizes[0])
+    blocks = big.length >= count
+      ? spread(big, count)
+      : [...big, ...spread(all.filter((b) => b.size !== sizes[0]), count - big.length)]
+    break
+  }
+  if (!blocks) blocks = build([1]).slice(0, count)
+
+  blocks.sort((a, b) => (a.c - b.c) || (a.r - b.r))
+  const covered = new Set()
+  for (const b of blocks) {
+    for (let i = 0; i < b.size; i++) for (let j = 0; j < b.size; j++) covered.add(key(b.c + i, b.r + j))
+  }
+  return { blocks, covered }
+}
+
+/** The most blocks a letter can hold, at its smallest useful block size. */
+function capacity(cells) {
+  return packSlots(cells, 2, new Set()).length
+}
+
+/**
+ * Give every theme a contiguous run of blocks inside one letter, with each
+ * letter taking a share of the themes in proportion to how much it can hold.
  */
 export function buildLayout(themes) {
   const letters = wordmark.letters
-  const mixedCap = letters.map((l) => packLetter(l.cells, true).blocks.length)
-  const smallCap = letters.map((l) => packLetter(l.cells, false).blocks.length)
-  const capSum = mixedCap.reduce((a, b) => a + b, 0)
+  const caps = letters.map((l) => capacity(l.cells))
+  const areas = letters.map((l) => l.cells.length)
+  const areaSum = areas.reduce((a, b) => a + b, 0)
   const imageSum = themes.reduce((a, t) => a + t.images.length, 0)
 
-  // Walk the themes in order, cutting to the next letter at whichever point
-  // lands closest to that letter's fair share.
   const groups = letters.map(() => [])
   let li = 0
   let acc = 0
   for (let i = 0; i < themes.length; i++) {
-    const target = (imageSum * mixedCap[li]) / capSum
+    const target = (imageSum * areas[li]) / areaSum
     const n = themes[i].images.length
     const lettersLeft = groups.length - li - 1
     const themesLeft = themes.length - i
     if (
       li < groups.length - 1 && acc > 0 && themesLeft > lettersLeft &&
-      (Math.abs(acc + n - target) >= Math.abs(acc - target) || acc + n > smallCap[li])
+      (Math.abs(acc + n - target) >= Math.abs(acc - target) || acc + n > caps[li])
     ) { li++; acc = 0 }
     groups[li].push(themes[i])
     acc += n
@@ -101,34 +134,42 @@ export function buildLayout(themes) {
     const group = groups[i]
     if (!group.length) return
     const required = group.reduce((a, t) => a + t.images.length, 0)
-
-    // Big blocks if they all fit; otherwise the denser, smaller grid.
-    const mixed = required <= mixedCap[i]
-    const { blocks, taken } = packLetter(letter.cells, mixed)
-
-    // Each theme gets at least one block per image; spares go round in turn.
-    const runs = group.map((t) => t.images.length)
-    let spare = blocks.length - required
-    for (let j = 0; spare > 0; j = (j + 1) % runs.length) { runs[j]++; spare-- }
-
-    const plain = letter.cells.filter(([c, r]) => !taken.has(key(c, r)))
+    const { blocks, covered } = packLetter(letter.cells, required)
+    const plain = letter.cells.filter(([c, r]) => !covered.has(key(c, r)))
 
     let at = 0
-    group.forEach((theme, j) => {
-      const mine = blocks.slice(at, at + runs[j])
-      at += runs[j]
-      const lo = Math.min(...mine.map((b) => b.c))
-      const hi = Math.max(...mine.map((b) => b.c + b.size - 1))
-      clusters.push({
+    const mineOf = []
+    group.forEach((theme) => {
+      const mine = blocks.slice(at, at + theme.images.length)
+      at += theme.images.length
+      if (!mine.length) return
+      const cluster = {
         theme,
         letter: letter.ch,
         letterIndex: i,
         blocks: mine,
-        // Uncovered slivers take the colour of whichever theme owns their column.
-        plain: plain.filter(([c]) => c >= lo && c <= hi),
-        cells: letter.cells.filter(([c]) => c >= lo && c <= hi),
-      })
+        plain: [],
+        lo: Math.min(...mine.map((b) => b.c)),
+        hi: Math.max(...mine.map((b) => b.c + b.size - 1)),
+      }
+      mineOf.push(cluster)
+      clusters.push(cluster)
     })
+
+    // Hand every uncovered cell to the nearest theme by column. Matching only
+    // cells that fall *inside* a theme's own span drops the parts of a letter
+    // that sit between two themes — the bars of an O, say — and the letterform
+    // comes apart.
+    for (const cell of plain) {
+      let best = null
+      let bestD = Infinity
+      for (const cluster of mineOf) {
+        const c = cell[0]
+        const d = c < cluster.lo ? cluster.lo - c : c > cluster.hi ? c - cluster.hi : 0
+        if (d < bestD) { bestD = d; best = cluster }
+      }
+      if (best) best.plain.push(cell)
+    }
   })
   return clusters
 }
@@ -169,33 +210,6 @@ export function buildPlainGeometry(cells) {
   }
   const g = new THREE.BufferGeometry()
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
-  return g
-}
-
-/** Side walls, emitted only where a cell has no neighbour. */
-export function buildSideGeometry(cells) {
-  const pos = []
-  const nor = []
-  const quad = (a, b, c, d, n) => {
-    // Reverse winding so each wall faces outward along `n`.
-    pos.push(...a, ...c, ...b, ...a, ...d, ...c)
-    for (let i = 0; i < 6; i++) nor.push(...n)
-  }
-
-  for (const [c, r] of cells) {
-    const x0 = cellX(c) - CELL / 2, x1 = x0 + CELL
-    const z0 = cellZ(r) - CELL / 2, z1 = z0 + CELL
-    const y0 = 0, y1 = HEIGHT
-
-    if (!occupied.has(key(c, r - 1))) quad([x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], [0, 0, -1])
-    if (!occupied.has(key(c, r + 1))) quad([x1, y0, z1], [x0, y0, z1], [x0, y1, z1], [x1, y1, z1], [0, 0, 1])
-    if (!occupied.has(key(c - 1, r))) quad([x0, y0, z1], [x0, y0, z0], [x0, y1, z0], [x0, y1, z1], [-1, 0, 0])
-    if (!occupied.has(key(c + 1, r))) quad([x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0], [1, 0, 0])
-  }
-
-  const g = new THREE.BufferGeometry()
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
-  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3))
   return g
 }
 

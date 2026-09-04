@@ -16,29 +16,29 @@ split across the seven letters:
 |---|---|---|---|---|---|---|
 | 96 | 147 | 104 | 118 | 87 | 94 | 92 |
 
-Each cell becomes a low extruded block. Every letter is then tiled with square
-**image blocks** — 3×3 cells where they fit, 2×2 where a letter has more images
-to show than room for. A block only ever sits on cells that are all solid
-letter, so the background drawn across it is shown **whole**: the letter
-outline never crops a picture. All **92 backgrounds** appear, each in its
-entirety.
+The letters lie flat on the floor and are tiled with square **image blocks** —
+3×3 cells where they fit, 2×2 where a letter has more images to show than room
+for big ones. A block only ever sits on cells that are all solid letter, so the
+background drawn across it is shown **whole**: the letter outline never crops a
+picture. Each of the **71 backgrounds appears exactly once** — nothing repeats,
+and nothing animates.
 
-The 22 themes are handed contiguous runs of those blocks, and each letter gets
-a share of the themes in proportion to how many images it can physically hold —
-otherwise a theme can land in a slice too narrow to fit even one block. Slivers
-the blocks can't cover take the theme's `background` colour, lifted toward its
-`accent` so the letter edges stay defined.
+Square uncropped tiles can only cover about 78% of a letter, so the rest shows
+as mat in the theme's `accent`. Every uncovered cell goes to the nearest theme
+by column; matching only cells that fall inside a theme's own span would drop
+the parts of a letter sitting between two themes — the bars of an O — and the
+letterform comes apart.
 
-Blocks only emit side walls where they have no neighbour, so interior faces
-between adjacent cells are never built. Image faces are unlit, so the
-wallpapers show their true colour; the walls are lit and tinted with the
-theme's `accent`. Nothing animates or cycles — the layout is static.
+The generator skips the branded wallpapers whose filenames contain `omarchy`:
+they are the wordmark on a flat ground, and read as blank tiles laid into the
+letters.
 
-The camera opens overhead, framed to the viewport, then drives the length of
-the word at low altitude, so the letter tops read as a road of images passing
-beneath, changing theme letter by letter. Phases run on wall-clock time rather
-than accumulated frame deltas, so a throttled or backgrounded tab can't fall
-behind.
+The camera opens overhead, framed to the viewport, then **drives the word like
+a road**. The route is written through each letter as one continuous gesture —
+looping and doubling back the way a pen would, not a straight pass down the
+word — and the camera rides it at constant speed, low and looking a short way
+ahead. Phases run on wall-clock time rather than accumulated frame deltas, so a
+throttled or backgrounded tab can't fall behind.
 
 ## Develop
 
@@ -49,8 +49,8 @@ npm run dev
 
 ## Regenerating assets
 
-The 92 backgrounds are read from a local Omarchy install, squared to 512px and
-compressed to WebP (108 MB → 1.9 MB). Re-run after installing new themes:
+The backgrounds are read from a local Omarchy install, squared to 512px and
+compressed to WebP (108 MB → 1.8 MB). Re-run after installing new themes:
 
 ```bash
 npm run assets    # needs ImageMagick (`magick`) on PATH

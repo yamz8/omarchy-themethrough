@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import themes from './themes.json'
 import {
-  wordmark, buildLayout, buildSlotGeometry, buildPlainGeometry, buildSideGeometry,
+  wordmark, buildLayout, buildSlotGeometry, buildPlainGeometry,
 } from './wordmark.js'
 import { loadTexture, imageUrl } from './textures.js'
 import { CameraRig, frameTopView } from './camera-rig.js'
@@ -31,7 +31,7 @@ const floor = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ color: 0x0c0e13, roughness: 1, metalness: 0 }),
 )
 floor.rotation.x = -Math.PI / 2
-floor.position.y = -0.01
+floor.position.y = -0.02
 scene.add(floor)
 
 const grid = new THREE.GridHelper(800, 200, 0x1b2030, 0x12151d)
@@ -44,16 +44,15 @@ const imageMaterials = []
 const pending = []
 
 for (const cluster of clusters) {
-  const { theme, blocks, plain, cells } = cluster
+  const { theme, blocks, plain } = cluster
 
-  // One image per block, drawn whole across it. Images repeat in order when a
-  // theme holds more blocks than it has backgrounds.
+  // One image per block, drawn whole across it. No background is repeated.
   blocks.forEach((block, i) => {
     const material = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false })
     imageMaterials.push(material)
     wordGroup.add(new THREE.Mesh(buildSlotGeometry(block), material))
     pending.push(
-      loadTexture(imageUrl(theme, theme.images[i % theme.images.length]))
+      loadTexture(imageUrl(theme, theme.images[i]))
         .then((tex) => { material.map = tex; material.needsUpdate = true })
         .catch(() => {}),
     )
@@ -62,26 +61,18 @@ for (const cluster of clusters) {
   if (plain.length) {
     wordGroup.add(new THREE.Mesh(
       buildPlainGeometry(plain),
-      // Lift the bare slivers toward the accent so letter edges stay defined
-      // against the background instead of dissolving into it.
+      // Square uncovered tiles can only cover about 78% of a letter, so the
+      // rest shows as mat. Key it off the theme's accent rather than its
+      // background: most backgrounds are near-black and the letterform breaks
+      // into disconnected strips.
       new THREE.MeshBasicMaterial({
-        color: new THREE.Color(theme.bg ?? '#111111')
-          .lerp(new THREE.Color(theme.accent), 0.3),
+        color: new THREE.Color(theme.accent).multiplyScalar(0.6),
         toneMapped: false,
       }),
     ))
   }
 
-  wordGroup.add(new THREE.Mesh(
-    buildSideGeometry(cells),
-    new THREE.MeshStandardMaterial({
-      color: new THREE.Color(theme.accent).multiplyScalar(0.32),
-      roughness: 0.75,
-      metalness: 0.1,
-    }),
-  ))
-
-  cluster.shown = Math.min(blocks.length, theme.images.length)
+  cluster.shown = blocks.length
 }
 scene.add(wordGroup)
 

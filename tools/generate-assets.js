@@ -35,7 +35,12 @@ async function buildBackgrounds() {
     const src = path.join(THEME_DIR, name, 'backgrounds')
     let files
     try {
-      files = (await fs.readdir(src)).filter((f) => /\.(jpe?g|png)$/i.test(f)).sort()
+      files = (await fs.readdir(src))
+        .filter((f) => /\.(jpe?g|png)$/i.test(f))
+        // Skip the branded wallpapers that are just the wordmark on a flat
+        // ground — they read as blank tiles laid into the letters.
+        .filter((f) => !/omarchy/i.test(f))
+        .sort()
     } catch { continue }
     if (!files.length) continue
 
