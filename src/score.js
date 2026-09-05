@@ -126,7 +126,8 @@ export class Score {
       filter.Q.value = 0.6
 
       const gain = ctx.createGain()
-      gain.gain.value = i === 0 ? 0.5 : 0.34 / Math.sqrt(i + 1)
+      const base = i === 0 ? 0.5 : 0.34 / Math.sqrt(i + 1)
+      gain.gain.value = base
 
       const oscs = [-7, 7].map((cents) => {
         const o = ctx.createOscillator()
@@ -139,7 +140,7 @@ export class Score {
       })
 
       filter.connect(gain).connect(this.padGain)
-      this.voices.push({ oscs, filter, gain })
+      this.voices.push({ oscs, filter, gain, base })
     }
 
     // Slow filter drift, so the pad is never quite static.
@@ -267,22 +268,68 @@ export class Score {
     if (index === 3 || index === 6) this.impact()
   }
 
-  /** Fade out and rest, without tearing down the graph. */
-  release() {
-    if (!this.ready) return
-    const now = this.ctx.currentTime
-    this.master.gain.setTargetAtTime(0.16, now, 1.6)
-    this.subGain.gain.setTargetAtTime(0.0, now, 1.6)
+/** Take over a parameter that is mid-automation. */
+  static seize(param, now) {
+    param.cancelScheduledValues(now)
+    param.setValueAtTime(param.value, now)
   }
 
+  /**
+   * The ending.
+   *
+   * The last shot already resolves onto the minor root, so the outro thins the
+   * chord from the top down until only that root is left, closes the filter as
+   * it goes, and lets a small swell decay into the reverb tail. It ramps to
+   * true silence rather than easing toward it: `setTargetAtTime` approaches its
+   * target asymptotically and would leave a drone playing under the end frame
+   * for as long as the page stayed open.
+   */
+  release() {
+    if (!this.ready) return
+    const { ctx } = this
+    const now = ctx.currentTime
+    const OUT = 6.5
+
+    for (const param of [this.subGain.gain, this.engineGain.gain]) {
+      Score.seize(param, now)
+      param.linearRampToValueAtTime(0, now + 1.4)
+    }
+
+    // Voices leave highest first, so the chord settles onto its root.
+    this.voices.forEach((v, i) => {
+      const leaves = now + 0.5 + (this.voices.length - 1 - i) * 0.62
+      Score.seize(v.gain.gain, now)
+      if (i > 0) v.gain.gain.linearRampToValueAtTime(0, leaves)
+
+      Score.seize(v.filter.frequency, now)
+      v.filter.frequency.linearRampToValueAtTime(210, now + OUT * 0.85)
+    })
+
+    // A last breath, then down to nothing while the tail rings on.
+    Score.seize(this.master.gain, now)
+    this.master.gain.linearRampToValueAtTime(0.62, now + 0.9)
+    this.master.gain.linearRampToValueAtTime(0, now + OUT)
+  }
+
+  /** Undo an outro and come back up. */
   resume() {
     if (!this.ready) return
-    this.master.gain.setTargetAtTime(0.55, this.ctx.currentTime, 0.8)
+    const now = this.ctx.currentTime
+    for (const v of this.voices) {
+      Score.seize(v.gain.gain, now)
+      v.gain.gain.linearRampToValueAtTime(v.base, now + 0.5)
+      Score.seize(v.filter.frequency, now)
+      v.filter.frequency.linearRampToValueAtTime(620, now + 0.8)
+    }
+    Score.seize(this.master.gain, now)
+    this.master.gain.linearRampToValueAtTime(0.55, now + 0.8)
   }
 
   mute() {
     if (!this.ready) return
-    this.master.gain.setTargetAtTime(0.0, this.ctx.currentTime, 0.4)
+    const now = this.ctx.currentTime
+    Score.seize(this.master.gain, now)
+    this.master.gain.linearRampToValueAtTime(0, now + 0.4)
   }
 
   /**

@@ -68,6 +68,12 @@ apart.
 - generous convolution reverb from a generated impulse — most of what makes it
   sound like a room rather than a synth
 
+The **ending** thins the chord from the top down until only the root is left,
+closes the filter as it goes, and lets a last swell decay into the reverb tail.
+It ramps to true silence rather than easing toward it — `setTargetAtTime`
+approaches its target asymptotically, which would leave a drone playing under
+the end frame for as long as the page stayed open. Replay undoes it.
+
 It is **silent until asked**. Browsers block audible autoplay, and starting
 noise unbidden is worse than starting none, so the film opens quiet with a
 `sound` toggle in the corner. Turning it on joins the score at the current
