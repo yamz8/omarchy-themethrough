@@ -224,6 +224,7 @@ export class Car {
     this.dropY = 15
     this.dropV = 0
     this.landed = false
+    this.dropStart = performance.now()
   }
 
   get dropping() {
@@ -239,6 +240,14 @@ export class Car {
         // One small bounce, then settle.
         if (this.dropV < -6) this.dropV *= -0.26
         else { this.dropV = 0; this.landed = true }
+      }
+      // The fall is stepped per frame, which is right for physics but means a
+      // throttled tab would leave the car hanging in the air. Bound it by the
+      // clock so the drop always finishes.
+      if (performance.now() - this.dropStart > 2000) {
+        this.dropY = 0
+        this.dropV = 0
+        this.landed = true
       }
     }
 
