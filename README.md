@@ -122,7 +122,14 @@ any machine.
 
 It renders **offline**: `performance.now` is swapped for a counter and the loop
 is stepped by hand, so the take is a true 60 even where the page only plays at
-24. Frames leave as raw RGBA, because this is a readback at 20ms against a
+24. That also buys real **motion blur** — eight exposures per frame across a
+180° shutter, averaged, the way an offline renderer does it rather than
+approximated from a velocity buffer. The film needs it: the driving shots move
+the image 24 to 31 pixels between frames and spike past 120 where the written
+route doubles back, and an unblurred edge crossing that far reads as a stutter
+rather than as speed. The exposures are averaged in **linear light** — a mean
+of sRGB values is not the mean of the light they stand for, and averaging the
+encoded numbers visibly darkens every trail. Frames leave as raw RGBA, because this is a readback at 20ms against a
 second per frame spent in `toBlob`. The letterbox and the fade are rebuilt per
 frame from the same constants the stylesheet uses and the grade is handed to
 the encoder as a still — all three are DOM, so a canvas recording loses them
@@ -133,8 +140,10 @@ through MediaRecorder, which keeps the sound but drops frames wherever the
 machine cannot encode 1080p live; take the audio from that pass and the picture
 from the offline one. Both follow the same cut list, so they line up.
 
-Point either at a sink with `to=`, and add `limit=` to check a take before
-committing to the whole film. Browsers gate audio on a gesture, so a realtime
+Point either at a sink with `to=`. `limit=`, `start=` and `blur=` narrow a take
+down to a few frames, or one fast moment of it, or the same frame with the
+shutter shut — enough to check a change against its own before before paying
+for the whole film. Browsers gate audio on a gesture, so a realtime
 take needs a click — or launch with `--autoplay-policy=no-user-gesture-required`
 and it runs itself.
 

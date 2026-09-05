@@ -10,7 +10,8 @@
  *                     means dropped frames.
  *   ?capture=frames   offline. Steps the film by hand against a clock of its
  *                     own and posts raw pixels a frame at a time, so the
- *                     result is a perfect 60 whatever the machine is doing.
+ *                     result is a perfect 60 whatever the machine is doing,
+ *                     with real motion blur from several exposures a frame.
  *                     Silent: pair it with a realtime take's audio.
  *
  * The letterbox, the grade and the opening fade are DOM, not canvas, so a
@@ -24,10 +25,21 @@
  *   size=1920x1080   canvas backing store, and so the take's resolution
  *   fps=60           frame rate
  *   to=<url>         POST the take here; otherwise it downloads
+ *   limit=N          render only N frames
+ *   start=<seconds>  begin partway into the film
+ *   blur=N           exposures per frame; 1 turns the shutter off
  */
 
 const LEAD = 900   // ms of the opening frame before the film rolls
 const TAIL = 3400  // ms held after the last cut, for the letterbox and the tail
+
+// Motion blur. The film moves the image up to 127px between frames on the
+// driving shots, and an unblurred edge moving that far reads as a stutter
+// rather than as speed. Rendering offline means it can be done the way an
+// offline renderer does it — several exposures per frame, averaged — instead
+// of approximated from a velocity buffer.
+const SAMPLES = 8
+const SHUTTER = 0.5  // 180°: the exposure spans half the frame interval
 
 const FADE_MS = 1200  // #fade, `opacity 1.2s ease`
 const BAR_MS = 1100   // .bar, `height 1.1s cubic-bezier(0.22, 1, 0.36, 1)`
@@ -49,6 +61,26 @@ function bezier(x1, y1, x2, y2) {
 
 const EASE = bezier(0.25, 0.1, 0.25, 1)          // CSS `ease`
 const SWING = bezier(0.22, 1, 0.36, 1)           // the letterbox curve
+
+/**
+ * Exposures have to be averaged in light, not in code values: the renderer
+ * writes sRGB, and a mean of sRGB numbers is not the mean of the light they
+ * stand for. On a bright tile edge crossing dark ground — which is most of
+ * what blurs here — averaging the encoded values darkens the trail visibly.
+ * Both directions are tabulated, so the per-pixel cost is a lookup.
+ */
+const LINEAR_STEPS = 4096
+const TO_LINEAR = new Float32Array(256)
+for (let i = 0; i < 256; i++) {
+  const c = i / 255
+  TO_LINEAR[i] = c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+}
+const TO_SRGB = new Uint8Array(LINEAR_STEPS)
+for (let i = 0; i < LINEAR_STEPS; i++) {
+  const c = i / (LINEAR_STEPS - 1)
+  const s = c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055
+  TO_SRGB[i] = Math.round(s * 255)
+}
 
 export async function startCapture({ renderer, camera, canvas, director, score, roll, loaded, frame }) {
   const params = new URLSearchParams(location.search)
@@ -139,35 +171,60 @@ async function renderOffline({ renderer, director, frame, width, height, fps, po
 
   const step = 1000 / fps
   const total = LEAD + director.total * 1000 + TAIL
-  // `limit` renders only the first N frames, for checking a take before
-  // committing to the whole film.
-  const count = Math.min(Math.round(total / step), Number(params.get('limit') ?? Infinity))
+  // `limit` renders only N frames and `start` begins partway in, for checking
+  // a take — or one fast moment of it — before committing to the whole film.
+  const t0 = Number(params.get('start') ?? 0) * 1000
+  const count = Math.min(Math.round((total - t0) / step), Number(params.get('limit') ?? Infinity))
 
   // The still grade goes first: the sink holds the encoder until it lands.
   const grade = await new Promise((r) => gradeLayer(width, height).toBlob(r, 'image/png'))
   await fetch(`${post}?grade`, { method: 'POST', body: grade })
 
   const real = performance.now.bind(performance)
-  let virtual = real()
+  const origin = real()
+  let virtual = origin
   performance.now = () => virtual
 
   const started = real()
   let rolled = false
   let endedAt = 0
-  director.onEnd = () => { endedAt = virtual }
+  // `blur=1` turns the shutter off, for comparing a take against itself.
+  const samples = Math.max(1, Number(params.get('blur') ?? SAMPLES))
+  const accum = samples > 1 ? new Float32Array(width * height * 4) : null
+
+  // Starting partway in means the film has to be already running, on a clock
+  // that puts its first frame at LEAD however far in this take begins.
+  if (t0 >= LEAD) { director.play(); director.startedAt = origin + LEAD; rolled = true }
 
   for (let i = 0; i < count; i++) {
-    const t = i * step
-    if (!rolled && t >= LEAD) { director.play(); rolled = true }
+    const t = t0 + i * step
+    if (!rolled && t >= LEAD) { virtual = origin + t; director.play(); rolled = true }
+    director.onEnd = () => { endedAt = t }
 
-    frame()
-    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+    // One exposure, or several across the open shutter and averaged.
+    if (accum) {
+      accum.fill(0)
+      for (let s = 0; s < samples; s++) {
+        virtual = origin + t + ((s + 0.5) / samples) * SHUTTER * step
+        frame()
+        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+        for (let p = 0; p < pixels.length; p++) accum[p] += TO_LINEAR[pixels[p]]
+      }
+      const scale = (LINEAR_STEPS - 1) / samples
+      for (let p = 0; p < pixels.length; p++) {
+        pixels[p] = TO_SRGB[Math.min(LINEAR_STEPS - 1, (accum[p] * scale) | 0)]
+      }
+    } else {
+      virtual = origin + t
+      frame()
+      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+    }
 
     // The letterbox slides in with the film and retracts on the last cut. Rows
     // come back bottom-up, but the bars are symmetric, so filling the first and
     // last rows is the same either way up.
     const bars = endedAt
-      ? 1 - SWING(Math.min((virtual - endedAt) / BAR_MS, 1))
+      ? 1 - SWING(Math.min((t - endedAt) / BAR_MS, 1))
       : rolled ? SWING(Math.min((t - LEAD) / BAR_MS, 1)) : 0
     if (bars > 0) {
       const rows = Math.round(bar * bars) * width
@@ -176,7 +233,7 @@ async function renderOffline({ renderer, director, frame, width, height, fps, po
     }
 
     // The opening fade, lifting off the first frame.
-    const fade = 1 - EASE(Math.min(t / FADE_MS, 1))
+    const fade = 1 - EASE(Math.min(t / FADE_MS, 1))  // absolute, so start= keeps it lifted
     if (fade > 0) {
       for (let p = 0; p < pixels.length; p += 4) {
         pixels[p] += (6 - pixels[p]) * fade
@@ -187,7 +244,6 @@ async function renderOffline({ renderer, director, frame, width, height, fps, po
 
     await fetch(post, { method: 'POST', body: pixels })
 
-    virtual += step
     if (i % 60 === 0) {
       const pace = (i + 1) / ((real() - started) / 1000)
       const left = (count - i) / pace
