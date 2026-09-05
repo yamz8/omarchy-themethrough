@@ -139,16 +139,19 @@ export function buildShots() {
     },
     // Low again, over the brightest stretch of the word.
     { dur: 7.5, ease: 'linear', drive: [0.73, 0.86] },
-    // Hero: the three-quarter push-in. Taken from a corner rather than square
-    // on, because the word is 81 long and 19 deep — viewed head-on it is a
-    // thin bright band in an empty frame, whatever the distance. Across the
-    // diagonal it runs corner to corner and the pictures are legible. The aim
-    // sits off the word's centre: perspective, not symmetry, decides where a
-    // shape lands in frame.
+    // Hero: the close three-quarter push-in, and the only shot that gets near
+    // enough to read the wallpapers as wallpapers.
+    //
+    // It used to hold the whole word, and that was the mistake. The word is 81
+    // by 19 in a 16:9 frame, so the tightest framing that fits all of it covers
+    // a quarter of the screen and leaves the rest bare floor — that ceiling is
+    // the subject's proportions, not the staging, and no angle beats it. Shots
+    // 4 and 8 already show the whole shape from above, so this one goes the
+    // other way and gets close. Linear, so it is still moving on the cut out.
     {
-      dur: 6.0, ease: 'easeOut',
-      a: { p: V(47.8, 45.6, 33.5), t: V(22.4, 0, -10.9) },
-      b: { p: V(45.9, 35.0, 32.1), t: V(23.0, 0, -9.7) },
+      dur: 6.0, ease: 'linear',
+      a: { p: V(-5.7, 15.3, 20.7), t: V(-2, 0, 0) },
+      b: { p: V(-4.9, 11.2, 16.3), t: V(-2, 0, 0) },
     },
     // Settle overhead and hold on the name. Moving on the cut, so the film
     // does not stall on both sides of its last join.
