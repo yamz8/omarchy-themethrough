@@ -121,55 +121,57 @@ Promise.all(pending).then(() => {
 const playButton = document.querySelector('#play')
 const playLabel = playButton.querySelector('.label')
 // --- sound ---------------------------------------------------------------
-// Silent until asked: browsers block audible autoplay, and starting noise
-// unbidden is worse than starting none. Turning it on joins the score at the
-// current shot rather than restarting the film — no jolt, and the cuts from
-// here on still land together.
+// The score is part of the film, so it starts with it. Browsers still gate
+// audible playback on a gesture, so the graph is built up front and the first
+// touch of the page — click, key, wheel — joins the score at the current shot
+// rather than restarting the film: no jolt, and the cuts from here on still
+// land together.
 const score = new Score()
-const soundButton = document.querySelector('#sound')
-let soundOn = false
 
-function paintSoundButton() {
-  soundButton.setAttribute('aria-pressed', String(soundOn))
-  soundButton.querySelector('.word').textContent = soundOn ? 'sound on' : 'sound'
-}
-
-soundButton.addEventListener('click', () => {
-  if (soundOn) {
-    soundOn = false
-    score.mute()
-    paintSoundButton()
-    return
-  }
+function startSound() {
   try {
     score.start()
     const i = Math.max(director.shotIndex, 0)
     score.setShot(i, director.shots[i])
     score.resume()
-    soundOn = true
   } catch {
     // No audio device, or the context was refused — the film is fine silent.
-    soundOn = false
   }
-  paintSoundButton()
-})
+}
+
+const WAKE_EVENTS = ['pointerdown', 'keydown', 'wheel', 'touchstart']
+
+function wakeSound() {
+  startSound()
+  // `resume()` only settles once the context is actually running, so the
+  // listeners come off after the gesture that worked, not the one that asked.
+  score.ctx?.resume().then(() => {
+    if (!score.running) return
+    for (const e of WAKE_EVENTS) window.removeEventListener(e, wakeSound)
+  }, () => {})
+}
+
+startSound()
+if (!score.running) {
+  for (const e of WAKE_EVENTS) window.addEventListener(e, wakeSound)
+}
 
 director.onShot = (shot, i) => {
-  if (soundOn) score.setShot(i, shot)
+  score.setShot(i, shot)
 }
 
 director.onEnd = () => {
   // Stay on the closing frame; only the letterbox retracts.
   document.body.classList.remove('rolling')
   playLabel.textContent = 'replay'
-  if (soundOn) score.release()
+  score.release()
 }
 
 function roll() {
   playLabel.textContent = 'replay'
   document.body.classList.add('rolling')
   director.play()
-  if (soundOn) score.resume()
+  score.resume()
 }
 
 playButton.addEventListener('click', roll)
@@ -310,7 +312,7 @@ function setDriving(on) {
     const c = car.chase()
     chaseEye.copy(c.pos)
     chaseAim.copy(c.target)
-    if (soundOn) score.setShot(2, director.shots[2])
+    score.setShot(2, director.shots[2])
   } else {
     held.clear()
     playLabel.textContent = 'replay'
@@ -369,7 +371,7 @@ renderer.setAnimationLoop(() => {
 
     updateCaveExperience(tunnels.locate(car.pos), dt)
 
-    if (soundOn) score.engine(Math.abs(car.speed) / 20)
+    score.engine(Math.abs(car.speed) / 20)
   } else {
     director.update()
   }

@@ -101,10 +101,12 @@ It ramps to true silence rather than easing toward it — `setTargetAtTime`
 approaches its target asymptotically, which would leave a drone playing under
 the end frame for as long as the page stayed open. Replay undoes it.
 
-It is **silent until asked**. Browsers block audible autoplay, and starting
-noise unbidden is worse than starting none, so the film opens quiet with a
-`sound` toggle in the corner. Turning it on joins the score at the current
-shot rather than restarting the film.
+The score is **part of the film**, so it starts with it — there is no toggle.
+Browsers still gate audible playback on a gesture, so the graph is built as the
+page loads and the first touch of it — click, key, wheel — joins the score at
+the current shot rather than restarting the film. The listeners come off once
+the context reports itself running, so a later click cannot raise the score
+again after the closing fade.
 
 `window.themethrough` exposes `{ director, score }`; `score.level()` reports
 the RMS reaching the output, which is how the mix was checked rather than
