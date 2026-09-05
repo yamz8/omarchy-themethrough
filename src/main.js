@@ -8,6 +8,11 @@ import { Car } from './car.js'
 import { buildTunnels, RIM } from './tunnels.js'
 import './style.css'
 
+// `?capture` turns the page into a render target for the promo film: fixed
+// resolution, no interface, and the take written out of the browser. The
+// harness itself is pulled in on demand at the bottom of this file.
+const capturing = new URLSearchParams(location.search).has('capture')
+
 const canvas = document.querySelector('#scene')
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
@@ -107,14 +112,14 @@ pending.forEach((p) => p.then(() => {
   status.textContent = `loading ${done}/${pending.length}`
 }))
 
-Promise.all(pending).then(() => {
+const loaded = Promise.all(pending).then(() => {
   status.textContent = ''
   document.body.classList.add('ready', 'lit')
   // Autoplay: the page is the film, so it starts itself once the last
   // background is in. The fade-up covers the first frame.
   // The drive control is already live during the fade. Do not let the delayed
   // autoplay restart the film behind drive mode if it is clicked in that gap.
-  setTimeout(() => { if (!driving) roll() }, 700)
+  if (!capturing) setTimeout(() => { if (!driving) roll() }, 700)
 })
 
 // --- the film ---
@@ -180,6 +185,7 @@ window.addEventListener('keydown', (e) => {
 })
 
 window.addEventListener('resize', () => {
+  if (capturing) return
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
@@ -344,9 +350,11 @@ window.addEventListener('blur', () => held.clear())
 window.themethrough = { director, score, car, held, input, renderer, scene }
 
 // --- loop ---
+// The body is named rather than inline so capture mode can step it by hand
+// against a clock of its own, instead of waiting on the display.
 let lastFrame = 0
 
-renderer.setAnimationLoop(() => {
+function frame() {
   const now = performance.now()
   const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.05) : 1 / 60
   lastFrame = now
@@ -377,4 +385,11 @@ renderer.setAnimationLoop(() => {
   }
 
   renderer.render(scene, camera)
-})
+}
+
+renderer.setAnimationLoop(frame)
+
+if (capturing) {
+  import('./capture.js').then(({ startCapture }) =>
+    startCapture({ renderer, camera, canvas, director, score, roll, loaded, frame }))
+}

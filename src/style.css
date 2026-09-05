@@ -232,3 +232,14 @@ body.at-theme-chamber #theme-reveal {
   .command-row { align-items: stretch; flex-direction: column; padding: 0.72rem; }
   #copy-theme { align-self: flex-start; }
 }
+
+/* --- capture mode -------------------------------------------------------
+   `?capture` records the canvas, so everything that is interface has to go.
+   The canvas keeps its own fixed backing store here and is only letterboxed
+   into the window for monitoring — what is recorded is not what is shown. */
+body.capturing #scene { object-fit: contain; background: #000; }
+body.capturing #hud,
+body.capturing #keys,
+body.capturing #theme-reveal { display: none; }
+body.capturing { cursor: none; }
+body.capturing.needs-gesture { cursor: pointer; }

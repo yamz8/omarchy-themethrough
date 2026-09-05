@@ -325,6 +325,18 @@ export class Score {
     this.master.gain.linearRampToValueAtTime(0.55, now + 0.8)
   }
 
+  /**
+   * A second output, for recording: the mixed signal as it leaves the glue
+   * compressor, as a MediaStream. The analyser already sits on that tap and
+   * passes its input through untouched, so this costs the film nothing.
+   */
+  tap() {
+    if (!this.ready) return null
+    const dest = this.ctx.createMediaStreamDestination()
+    this.analyser.connect(dest)
+    return dest.stream
+  }
+
   mute() {
     if (!this.ready) return
     const now = this.ctx.currentTime

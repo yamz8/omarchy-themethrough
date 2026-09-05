@@ -113,6 +113,31 @@ the current shot rather than restarting the film. The listeners come off once
 the context reports itself running, so a later click cannot raise the score
 again after the closing fade.
 
+## Capture
+
+`?capture=frames` turns the page into a render target and writes the film out
+of the browser a frame at a time, so a promo cut is a rebuild rather than a
+screen recording — no desktop, no cursor, no room noise, and the same result on
+any machine.
+
+It renders **offline**: `performance.now` is swapped for a counter and the loop
+is stepped by hand, so the take is a true 60 even where the page only plays at
+24. Frames leave as raw RGBA, because this is a readback at 20ms against a
+second per frame spent in `toBlob`. The letterbox and the fade are rebuilt per
+frame from the same constants the stylesheet uses and the grade is handed to
+the encoder as a still — all three are DOM, so a canvas recording loses them
+silently.
+
+It is silent by design. `?capture` alone records canvas and score together
+through MediaRecorder, which keeps the sound but drops frames wherever the
+machine cannot encode 1080p live; take the audio from that pass and the picture
+from the offline one. Both follow the same cut list, so they line up.
+
+Point either at a sink with `to=`, and add `limit=` to check a take before
+committing to the whole film. Browsers gate audio on a gesture, so a realtime
+take needs a click — or launch with `--autoplay-policy=no-user-gesture-required`
+and it runs itself.
+
 `window.themethrough` exposes `{ director, score }`; `score.level()` reports
 the RMS reaching the output, which is how the mix was checked rather than
 assumed.
