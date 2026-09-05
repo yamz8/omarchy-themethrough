@@ -215,6 +215,7 @@ export class Car {
 
   reset(x = 0, z = 22) {
     this.pos = new THREE.Vector3(x, 0, z)
+    this.constrain = this.constrain ?? null
     this.heading = -Math.PI / 2
     this.speed = 0
     this.steer = 0
@@ -276,13 +277,20 @@ export class Car {
     this.pos.x += Math.cos(this.heading) * this.speed * dt
     this.pos.z += Math.sin(this.heading) * this.speed * dt
 
-    // A generous soft boundary, so it is hard to get lost out in the dark.
-    const BX = 92
-    const BZ = 62
-    if (Math.abs(this.pos.x) > BX || Math.abs(this.pos.z) > BZ) {
-      this.pos.x = THREE.MathUtils.clamp(this.pos.x, -BX, BX)
-      this.pos.z = THREE.MathUtils.clamp(this.pos.z, -BZ, BZ)
-      this.speed *= 0.86
+    // The tunnels supply the walls once they exist; until then a plain radial
+    // bound keeps the car on the ground.
+    if (this.constrain) {
+      const before = this.pos.x * this.pos.x + this.pos.z * this.pos.z
+      this.constrain(this.pos)
+      const after = this.pos.x * this.pos.x + this.pos.z * this.pos.z
+      if (Math.abs(after - before) > 0.01) this.speed *= 0.9
+    } else {
+      const R = 74
+      const r = Math.hypot(this.pos.x, this.pos.z)
+      if (r > R) {
+        this.pos.multiplyScalar(R / r)
+        this.speed *= 0.86
+      }
     }
 
     // Lean into the corner, and squat under power.

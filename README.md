@@ -45,6 +45,31 @@ wheels and arches stand proud of the flanks (without that it reads as a slab),
 and the headlights are an additive pool on the ground rather than a real light,
 because the image tiles are unlit and a lamp would not touch them.
 
+### Tunnels
+
+One tunnel per theme, radiating out from the wordmark. Walls and ceiling are
+clad in that theme's backgrounds, with a strip of its `accent` underfoot. Each
+tunnel ends at the rim of the ground — a cliff — and beyond the drop the whole
+theme hangs in the void on an arc facing back down the tunnel, so arriving at
+the edge is the reveal.
+
+Panel height matches the panel pitch so each wall image stays square; the
+backgrounds are 1:1 and stretching them to a taller wall was obvious. The
+gallery sits low and fanned so it is already framed by the tunnel mouth on the
+approach rather than hidden above the ceiling.
+
+The corridors are walls, not decoration: past the mouths the car can only
+continue where a tunnel actually is, and it is held just short of the cliff
+rather than driven off it. Inside the ring of mouths it roams free.
+
+Two grounds exist. The film uses an endless plane, drive mode a disc — a cliff
+needs a real edge, and that edge showed as a horizon curve in the film's wide
+hero shot when the disc was used for both.
+
+All 22 tunnels share one quad geometry and one material per image, and only the
+tunnel you are inside survives frustum culling: drive mode costs 76 draw calls
+against the film's 66.
+
 Handling is scaled to the world rather than to a road — the wordmark is only 81
 units long, and at a realistic top speed you cross the whole thing in a couple
 of seconds with no time to look at anything. A generous soft boundary keeps the

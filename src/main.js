@@ -5,6 +5,7 @@ import { loadTexture, imageUrl } from './textures.js'
 import { Director } from './director.js'
 import { Score } from './score.js'
 import { Car } from './car.js'
+import { buildTunnels, RIM } from './tunnels.js'
 import './style.css'
 
 const canvas = document.querySelector('#scene')
@@ -25,19 +26,41 @@ const key = new THREE.DirectionalLight(0xffffff, 0.95)
 key.position.set(-30, 40, 20)
 scene.add(key)
 
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(800, 800),
-  new THREE.MeshStandardMaterial({ color: 0x0a0c11, roughness: 1, metalness: 0 }),
+// Two grounds. The film gets an endless plane; drive mode gets a disc, because
+// a cliff needs a real edge — and that edge showed as a horizon curve in the
+// film's wide hero shot when the disc was used for both.
+const ground = new THREE.MeshStandardMaterial({ color: 0x0a0c11, roughness: 1, metalness: 0 })
+
+const floorPlane = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), ground)
+floorPlane.rotation.x = -Math.PI / 2
+floorPlane.position.y = -0.02
+scene.add(floorPlane)
+
+const floorDisc = new THREE.Mesh(new THREE.CircleGeometry(RIM, 96), ground)
+floorDisc.rotation.x = -Math.PI / 2
+floorDisc.position.y = -0.02
+floorDisc.visible = false
+scene.add(floorDisc)
+
+// A faint lip, so the drop reads as an edge and not as the render ending.
+const rim = new THREE.Mesh(
+  new THREE.RingGeometry(RIM - 0.9, RIM, 96),
+  new THREE.MeshBasicMaterial({ color: 0x2b3444, toneMapped: false, side: THREE.DoubleSide }),
 )
-floor.rotation.x = -Math.PI / 2
-floor.position.y = -0.02
-scene.add(floor)
+rim.rotation.x = -Math.PI / 2
+rim.position.y = 0.01
+rim.visible = false
+scene.add(rim)
 
 // --- build the wordmark ---
 const clusters = buildLayout(themes)
 const wordGroup = new THREE.Group()
 const imageMaterials = []
 const pending = []
+
+// Every loaded texture, keyed by theme, so the tunnels can clad their walls
+// from the same images without fetching anything twice.
+const themeTextures = new Map(themes.map((t) => [t.name, new Array(t.images.length).fill(null)]))
 
 for (const cluster of clusters) {
   const { theme, blocks, plain } = cluster
@@ -49,7 +72,11 @@ for (const cluster of clusters) {
     wordGroup.add(new THREE.Mesh(buildSlotGeometry(block), material))
     pending.push(
       loadTexture(imageUrl(theme, theme.images[i]))
-        .then((tex) => { material.map = tex; material.needsUpdate = true })
+        .then((tex) => {
+          material.map = tex
+          material.needsUpdate = true
+          themeTextures.get(theme.name)[i] = tex
+        })
         .catch(() => {}),
     )
   })
@@ -184,6 +211,17 @@ scene.add(carLight)
 const chaseEye = new THREE.Vector3()
 const chaseAim = new THREE.Vector3()
 
+// Built on first entry, not at load: the textures have to be in already, and
+// the film never shows them.
+let tunnels = null
+function ensureTunnels() {
+  if (tunnels) return
+  tunnels = buildTunnels(themes, themeTextures)
+  tunnels.group.visible = false
+  scene.add(tunnels.group)
+  car.constrain = tunnels.constrain
+}
+
 function readInput() {
   input.throttle = (held.has('KeyW') || held.has('ArrowUp') ? 1 : 0) +
     (held.has('KeyS') || held.has('ArrowDown') ? -1 : 0)
@@ -193,11 +231,19 @@ function readInput() {
 }
 
 function setDriving(on) {
+  // Built before anything is shown: on the first entry the group does not yet
+  // exist, so setting visibility ahead of this left the tunnels hidden.
+  if (on) ensureTunnels()
+
   driving = on
   document.body.classList.toggle('driving', on)
   document.body.classList.toggle('rolling', false)
   car.root.visible = on
   carLight.visible = on
+  rim.visible = on
+  floorDisc.visible = on
+  floorPlane.visible = !on
+  if (tunnels) tunnels.group.visible = on
   driveButton.querySelector('.label').textContent = on ? 'exit' : 'drive'
 
   if (on) {
@@ -229,7 +275,7 @@ window.addEventListener('keyup', (e) => held.delete(e.code))
 window.addEventListener('blur', () => held.clear())
 
 // A handle for inspecting or tweaking playback from the console.
-window.themethrough = { director, score, car, held, input }
+window.themethrough = { director, score, car, held, input, renderer, scene }
 
 // --- loop ---
 let lastFrame = 0
