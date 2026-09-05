@@ -92,6 +92,27 @@ function buildRoute() {
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z)
 
+/** Camera and aim heights for the driving shots. */
+const DRIVE_Y = 8.5
+const AIM_Y = 1.2
+
+/**
+ * Where the up-vector starts leaning toward the overhead orientation, and
+ * where it has fully arrived. Below the first number the camera keeps a plain
+ * +y up and cannot roll.
+ */
+const TILT_FROM = 0.75
+const TILT_TO = 0.998
+
+/**
+ * Closest the driving aim may sit ahead of the camera. Derived rather than
+ * picked: an aim at least this far out keeps the view shallower than
+ * TILT_FROM, so a drive can never wake the overhead up-vector blend and roll
+ * the picture. The margin covers the damped aim lagging inside its target
+ * while the route folds back.
+ */
+const AIM_LEAD = 1.15 * (DRIVE_Y - AIM_Y) * Math.sqrt(1 / (TILT_FROM * TILT_FROM) - 1)
+
 /**
  * Framing height for the overhead shots: `OVER()` fits the whole word in,
  * `OVER(k)` a fraction of that height, so two overhead framings can differ by
@@ -204,12 +225,40 @@ export class Director {
    * Where a driving shot looks: the average of several points up the road
    * rather than a single one. A lone look-ahead point sitting on the same
    * curve swings hard through every bend, which is what made the drive snap.
+   *
+   * The average alone is not enough, because the route is handwriting and
+   * doubles back on itself — the bowl of the R returning to its stem, the
+   * zigzag of the M. Through those the look-ahead points fold back toward the
+   * camera and the average lands a few units in front of it. Aiming there is
+   * steep as well as unstable: the camera rides at DRIVE_Y and the aim sits at
+   * AIM_Y, so an aim four units ahead looks down at nearly 60 degrees, which is
+   * enough to wake the up-vector blend meant for the overhead shots and roll
+   * the picture. Holding the aim out at arm's length keeps the view shallow,
+   * and is what a driver does anyway — you look through a turn, not at your
+   * own bumper.
    */
-  aimAhead(u) {
+  aimAhead(u, pos) {
     const acc = new THREE.Vector3()
     const offsets = [0.020, 0.035, 0.052, 0.072, 0.095]
     for (const d of offsets) acc.add(this.route.getPointAt(Math.min(u + d, 1)))
-    return acc.divideScalar(offsets.length)
+    acc.divideScalar(offsets.length)
+
+    if (!pos) return acc
+    let dx = acc.x - pos.x
+    let dz = acc.z - pos.z
+    let horiz = Math.hypot(dx, dz)
+    if (horiz < AIM_LEAD) {
+      // Straight down the road if the fold left no usable bearing at all.
+      if (horiz < 1e-3) {
+        const t = this.route.getTangentAt(Math.min(u + 0.01, 1))
+        dx = t.x
+        dz = t.z
+        horiz = Math.hypot(dx, dz) || 1
+      }
+      acc.x = pos.x + (dx / horiz) * AIM_LEAD
+      acc.z = pos.z + (dz / horiz) * AIM_LEAD
+    }
+    return acc
   }
 
   /** The still we hold on before the film starts and after it ends. */
@@ -255,10 +304,10 @@ export class Director {
         if (shot.drive) {
           const u = THREE.MathUtils.lerp(shot.drive[0], shot.drive[1], k)
           pos = this.route.getPointAt(u)
-          pos.y = 8.5
+          pos.y = DRIVE_Y
 
-          const desired = this.aimAhead(u)
-          desired.y = 1.2
+          const desired = this.aimAhead(u, pos)
+          desired.y = AIM_Y
           if (!this.aimLive || cut) {
             // Snap on a cut: the join should be an edit, not a swing.
             this.aim.copy(desired)
@@ -282,7 +331,7 @@ export class Director {
     // vector toward -z — but only as the camera actually approaches vertical.
     // Blending it in any earlier rolls the horizon during the low shots.
     const dir = target.clone().sub(pos).normalize()
-    const tilt = THREE.MathUtils.smoothstep(Math.abs(dir.y), 0.75, 0.998)
+    const tilt = THREE.MathUtils.smoothstep(Math.abs(dir.y), TILT_FROM, TILT_TO)
     this.camera.up.set(0, 1 - tilt, -tilt).normalize()
     this.camera.lookAt(target)
   }
