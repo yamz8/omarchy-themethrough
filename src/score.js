@@ -14,15 +14,13 @@ const freq = (midi) => 440 * Math.pow(2, (midi - 69) / 12)
 
 // One chord per shot. It opens and closes on the minor root, lifting to the
 // major fourth and fifth under the two reveals.
+/** One chord per shot, closing back onto the root it opened on. */
 const PROGRESSION = [
-  [45, 52, 57, 60, 64], // Am   cold open
-  [41, 48, 53, 57, 60], // F    low move
+  [45, 52, 57, 60, 64], // Am   track in
   [36, 48, 55, 60, 64], // C    the drive
-  [43, 50, 55, 59, 62], // G    break out
-  [41, 48, 53, 57, 60], // F    overhead
+  [43, 50, 55, 59, 62], // G    cross
   [38, 50, 57, 62, 65], // Dm   low again
-  [36, 48, 55, 60, 64], // C    hero
-  [45, 52, 57, 60, 64], // Am   sign-off
+  [45, 52, 57, 60, 64], // Am   pull back
 ]
 
 const VOICES = 5
@@ -264,8 +262,9 @@ export class Score {
     this.subGain.gain.setTargetAtTime(driving ? 0.15 : 0.03, now, driving ? 1.1 : 2.0)
 
     if (index > 0) this.whoosh(driving ? 1.15 : 0.85)
-    // The rise to overhead and the hero push-in are the two beats worth marking.
-    if (index === 3 || index === 6) this.impact()
+    // The cut list says which shots are beats, so re-cutting the film cannot
+    // leave the score marking moments that have moved or gone.
+    if (shot?.beat) this.impact()
   }
 
 /** Take over a parameter that is mid-automation. */

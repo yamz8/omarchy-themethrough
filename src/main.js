@@ -318,7 +318,10 @@ function setDriving(on) {
     const c = car.chase()
     chaseEye.copy(c.pos)
     chaseAim.copy(c.target)
-    score.setShot(2, director.shots[2])
+    // Borrow a driving shot's voicing, since that is what the car is doing.
+    // Found rather than numbered: the cut list is re-cut from time to time.
+    const i = director.shots.findIndex((s) => s.drive)
+    score.setShot(Math.max(i, 0), director.shots[Math.max(i, 0)])
   } else {
     held.clear()
     playLabel.textContent = 'replay'

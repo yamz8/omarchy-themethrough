@@ -121,64 +121,62 @@ const AIM_LEAD = 1.15 * (DRIVE_Y - AIM_Y) * Math.sqrt(1 / (TILT_FROM * TILT_FROM
 const OVER = (k = 1) => `over:${k}`
 
 /**
- * The cut. Each shot is a move from one framing to another; the camera jumps
- * between shots, so the joins read as edits rather than one endless glide.
+ * The cut.
+ *
+ * Five long takes rather than eight short ones. The eight-shot version spent
+ * five of its shots barely moving — the image crawled at 0.2 to 2.7 px a
+ * frame in them against 8+ in the two driving shots, a fortyfold swing in
+ * tempo — so the film kept starting and stopping instead of running. These
+ * four opening shots sit between 7.1 and 8.5, close enough that the cuts land
+ * inside one continuous movement.
+ *
+ * What makes a shot feel like it moves is sideways travel, not speed. A
+ * camera flying straight ahead barely disturbs the middle of frame however
+ * fast it goes, which is why the old approach shots read as static; the
+ * driving shots felt quick because the route curves and sweeps the picture
+ * across. So the staged shots here track along the word rather than into it.
  *
  * `drive` shots ride the written route at car height; the rest are staged
- * moves. Captions carry the facts the piece is actually about.
+ * moves. Every join changes the view by at least 30 degrees.
  */
 export function buildShots() {
   return [
-    // Cold open: down among the pictures, drifting, before you know what it is.
+    // Track in: a low run along the word, looking across and slightly ahead.
+    // Sideways rather than head-on, so the pictures sweep the frame instead of
+    // creeping out of the vanishing point — a camera flying straight forward
+    // barely disturbs the middle of frame however fast it goes. It opens
+    // already on pictures: aimed the other way it spent its first two seconds
+    // on bare floor, which is the worst possible thing to autoplay.
     {
-      dur: 5.5, ease: 'linear',
-      a: { p: V(L.O - 15, 2.5, 9), t: V(L.O - 4, 0.6, 3) },
-      b: { p: V(L.O - 2, 2.9, 6), t: V(L.O + 9, 0.6, 1) },
+      dur: 10.5, ease: 'linear',
+      a: { p: V(-46, 6.5, 11), t: V(-38, 0, -3) },
+      b: { p: V(14, 6.5, 11), t: V(22, 0, -3) },
     },
-    // Title, still low, still moving — but swung across the word rather than
-    // along it, so the cut off the cold open is a change of angle.
+    // The drive: the route as written, through the middle of the word, and
+    // the longest take in the film.
+    { dur: 12.0, ease: 'linear', drive: [0.30, 0.50], beat: true },
+    // Cross: up off the surface but nowhere near overhead, tracking the whole
+    // length the other way. The one shot that shows how far the word runs.
     {
-      dur: 5.0, ease: 'linear',
-      a: { p: V(L.M - 11, 3.4, 14), t: V(L.M + 3, 0.6, -6) },
-      b: { p: V(L.M + 2, 3.9, 11), t: V(L.M + 16, 0.6, -9) },
+      dur: 9.5, ease: 'linear',
+      a: { p: V(-30, 11, 12), t: V(-37, 0, 0) },
+      b: { p: V(30, 11, 12), t: V(23, 0, 0) },
     },
-    // The drive: the route as written, through the middle of the word.
-    { dur: 9.5, ease: 'linear', drive: [0.31, 0.47] },
-    // Break out: rise off the surface and let the whole shape land. Eased out
-    // only — it has to be moving on the cut in, and settle on the way out.
-    {
-      dur: 5.5, ease: 'easeOut',
-      a: { p: V(L.R, 7, 16), t: V(L.R + 6, 0.5, 2) },
-      b: { p: V(0, OVER(), 0), t: V(0, 0, 0) },
-    },
-    // Drifting across the word — raked and closer, so cutting off the plumb
-    // overhead that ends the break out reads as an edit and not a skip.
-    {
-      dur: 5.5, ease: 'linear',
-      a: { p: V(-13, OVER(0.72), 24), t: V(-13, 0, -6) },
-      b: { p: V(13, OVER(0.72), 24), t: V(13, 0, -6) },
-    },
-    // Low again, over the brightest stretch of the word.
-    { dur: 7.5, ease: 'linear', drive: [0.73, 0.86] },
-    // Hero: the close three-quarter push-in, and the only shot that gets near
-    // enough to read the wallpapers as wallpapers.
+    // Low again, matched to the first drive. The window stops at 0.84 rather
+    // than running to the end of the route: the themes out at the Y are the
+    // monochrome ones, so the old range spent its last seconds in the grey.
+    // Ending on the most saturated stretch keeps the colour up to the cut.
+    { dur: 9.5, ease: 'linear', drive: [0.68, 0.84] },
+    // Pull back: open close enough to read the wallpapers as wallpapers, then
+    // rise off them until the whole word lands. The hero and the sign-off as
+    // one reveal instead of two shots that each hold still.
     //
-    // It used to hold the whole word, and that was the mistake. The word is 81
-    // by 19 in a 16:9 frame, so the tightest framing that fits all of it covers
-    // a quarter of the screen and leaves the rest bare floor — that ceiling is
-    // the subject's proportions, not the staging, and no angle beats it. Shots
-    // 4 and 8 already show the whole shape from above, so this one goes the
-    // other way and gets close. Linear, so it is still moving on the cut out.
+    // This one is allowed to be slow, and cannot help it: a framing that holds
+    // all 81 by 19 of the word sits 66 units up, and at that distance nothing
+    // moves quickly. Ending calm is the point — the film runs, then resolves.
     {
-      dur: 6.0, ease: 'linear',
-      a: { p: V(-5.7, 15.3, 20.7), t: V(-2, 0, 0) },
-      b: { p: V(-4.9, 11.2, 16.3), t: V(-2, 0, 0) },
-    },
-    // Settle overhead and hold on the name. Moving on the cut, so the film
-    // does not stall on both sides of its last join.
-    {
-      dur: 6.5, ease: 'easeOut',
-      a: { p: V(0, OVER(), 26), t: V(0, 0, 3) },
+      dur: 9.5, ease: 'easeInOut', beat: true,
+      a: { p: V(-4.9, 11.2, 16.3), t: V(-2, 0, 0) },
       b: { p: V(0, OVER(), 0), t: V(0, 0, 0) },
     },
   ]

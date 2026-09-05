@@ -9,18 +9,29 @@ descend and fly the length of the word before rising back to where you started.
 ## The film
 
 The page is a piece of film and plays itself once the last background loads.
-It runs as a **cut list**, not one endless glide — eight shots, each a move
-from one framing to another, with the camera jumping between them so the joins
-read as edits:
+It runs as a **cut list**, not one endless glide — five long takes, each a
+move from one framing to another, with the camera jumping between them so the
+joins read as edits:
 
-1. **Cold open** — down among the pictures, drifting, before you know what it is
-2. **Low move** — still down among them, swung across the M
-3. **The drive** — the written route, through the middle of the word
-4. **Break out** — rise off the surface and let the whole shape land
-5. **Overhead** — raked and closer, drifting across the word
-6. **Low again** — over the brightest stretch
-7. **Hero** — the close three-quarter push-in, near enough to read the pictures
-8. **Sign-off** — settle overhead and hold on the name
+1. **Track in** — a low run along the word, looking across it
+2. **The drive** — the written route, through the middle of the word
+3. **Cross** — up off the surface, tracking the whole length the other way
+4. **Low again** — the route once more, over the most saturated stretch
+5. **Pull back** — close enough to read the pictures, then up until the whole
+   word lands
+
+It used to be eight shots, and five of them barely moved: the image crawled at
+0.2 to 2.7 pixels a frame in those against 8+ in the two driving shots, a
+fortyfold swing in tempo that made the film keep starting and stopping. The
+four opening shots now sit between 6.5 and 7.7, close enough that the cuts
+land inside one continuous movement. Only the last one slows, and it cannot
+help it — a framing that holds all 81 by 19 of the word sits 66 units up, and
+nothing moves quickly from that far away. Ending calm is the point.
+
+What makes a shot feel like it moves is sideways travel, not speed: a camera
+flying straight ahead barely disturbs the middle of frame however fast it
+goes, which is why the old approach shots read as static while the driving
+ones felt quick. So the staged shots track along the word rather than into it.
 
 The joins are held to two rules, because breaking either one reads as a fault
 rather than an edit: consecutive shots differ by at least 30° of view angle or
