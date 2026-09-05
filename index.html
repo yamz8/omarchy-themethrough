@@ -22,10 +22,22 @@
 
     <div id="hud">
       <div id="status">loading</div>
-      <button id="play" type="button">
-        <span class="glyph">&#9654;</span>
-        <span class="label">play</span>
-      </button>
+      <div class="buttons">
+        <button id="play" type="button">
+          <span class="glyph">&#9654;</span>
+          <span class="label">play</span>
+        </button>
+        <button id="drive" type="button">
+          <span class="glyph">&#9679;</span>
+          <span class="label">drive</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="keys">
+      <span><b>W</b>&#8202;/&#8202;<b>S</b> throttle</span>
+      <span><b>A</b>&#8202;/&#8202;<b>D</b> steer</span>
+      <span><b>space</b> brake</span>
     </div>
   </body>
   <script type="module" src="/src/main.js"></script>

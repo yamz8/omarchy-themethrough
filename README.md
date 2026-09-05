@@ -29,6 +29,27 @@ no overlay text and no ground grid — the pictures carry it, floating in dark.
 Shot timings run on wall-clock time rather than accumulated frame deltas, so a
 throttled or backgrounded tab can't fall behind the cut.
 
+## Drive
+
+A second mode, on the button beside `replay`. A Group-B rally coupé drops in,
+falls, bounces once and settles, and you drive it over the letters.
+
+`W`/`S` throttle, `A`/`D` steer, `space` brake, `Esc` to leave.
+
+The car is built from primitives with its livery drawn to canvas, not loaded
+from a model. It is the silhouette and the racing dress — boxed arches, race
+number, round lamps, rear wing — and deliberately carries no third-party marks.
+
+Two things it has to work around: the body is narrower than the track so the
+wheels and arches stand proud of the flanks (without that it reads as a slab),
+and the headlights are an additive pool on the ground rather than a real light,
+because the image tiles are unlit and a lamp would not touch them.
+
+Handling is scaled to the world rather than to a road — the wordmark is only 81
+units long, and at a realistic top speed you cross the whole thing in a couple
+of seconds with no time to look at anything. A generous soft boundary keeps the
+car from getting lost out in the dark.
+
 ## Sound
 
 The score is **synthesised, not sampled** — no audio file, no licensing, a few

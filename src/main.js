@@ -4,6 +4,7 @@ import { buildLayout, buildSlotGeometry, buildPlainGeometry } from './wordmark.j
 import { loadTexture, imageUrl } from './textures.js'
 import { Director } from './director.js'
 import { Score } from './score.js'
+import { Car } from './car.js'
 import './style.css'
 
 const canvas = document.querySelector('#scene')
@@ -162,11 +163,104 @@ window.addEventListener('resize', () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
+// --- drive ---------------------------------------------------------------
+// A second mode: drop the car in and drive it over the letters.
+const car = new Car()
+car.root.visible = false
+scene.add(car.root)
+
+const driveButton = document.querySelector('#drive')
+const input = { throttle: 0, steer: 0, brake: false }
+const held = new Set()
+let driving = false
+
+// A little fill light, so the car reads as a solid object against a scene lit
+// almost entirely for flat, unlit picture tiles.
+const carLight = new THREE.DirectionalLight(0xffffff, 1.1)
+carLight.position.set(6, 14, 8)
+carLight.visible = false
+scene.add(carLight)
+
+const chaseEye = new THREE.Vector3()
+const chaseAim = new THREE.Vector3()
+
+function readInput() {
+  input.throttle = (held.has('KeyW') || held.has('ArrowUp') ? 1 : 0) +
+    (held.has('KeyS') || held.has('ArrowDown') ? -1 : 0)
+  input.steer = (held.has('KeyA') || held.has('ArrowLeft') ? -1 : 0) +
+    (held.has('KeyD') || held.has('ArrowRight') ? 1 : 0)
+  input.brake = held.has('Space')
+}
+
+function setDriving(on) {
+  driving = on
+  document.body.classList.toggle('driving', on)
+  document.body.classList.toggle('rolling', false)
+  car.root.visible = on
+  carLight.visible = on
+  driveButton.querySelector('.label').textContent = on ? 'exit' : 'drive'
+
+  if (on) {
+    director.stop()
+    car.reset()
+    // Start the chase behind where the car will land, so the first frame is
+    // already framed rather than snapping into place.
+    const c = car.chase()
+    chaseEye.copy(c.pos)
+    chaseAim.copy(c.target)
+    if (soundOn) score.setShot(2, director.shots[2])
+  } else {
+    held.clear()
+    playLabel.textContent = 'replay'
+    score.engineOff()
+  }
+}
+
+driveButton.addEventListener('click', () => setDriving(!driving))
+
+window.addEventListener('keydown', (e) => {
+  if (!driving) return
+  if (e.code === 'Escape') { setDriving(false); return }
+  held.add(e.code)
+  // Arrows and space scroll the page otherwise.
+  if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault()
+})
+window.addEventListener('keyup', (e) => held.delete(e.code))
+window.addEventListener('blur', () => held.clear())
+
 // A handle for inspecting or tweaking playback from the console.
-window.themethrough = { director, score }
+window.themethrough = { director, score, car, held, input }
 
 // --- loop ---
+let lastFrame = 0
+
 renderer.setAnimationLoop(() => {
-  director.update()
+  const now = performance.now()
+  const dt = lastFrame ? Math.min((now - lastFrame) / 1000, 0.05) : 1 / 60
+  lastFrame = now
+
+  if (driving) {
+    readInput()
+    car.update(dt, input)
+
+    // Damped chase, on the same frame-rate independent constant the film uses,
+    // so the follow eases rather than snapping to the car each frame.
+    const c = car.chase()
+    const k = 1 - Math.exp(-4.5 * dt)
+    chaseEye.lerp(c.pos, k)
+    chaseAim.lerp(c.target, 1 - Math.exp(-7 * dt))
+    camera.position.copy(chaseEye)
+    camera.up.set(0, 1, 0)
+    camera.lookAt(chaseAim)
+
+    carLight.position.set(car.pos.x + 6, 14, car.pos.z + 8)
+    carLight.target.position.copy(car.pos)
+    carLight.target.updateMatrixWorld()
+
+    if (soundOn) score.engine(Math.abs(car.speed) / 20)
+  } else {
+    director.update()
+  }
+
   renderer.render(scene, camera)
 })

@@ -78,7 +78,10 @@ body.rolling #hud { opacity: 0; pointer-events: none; }
   min-height: 1em;
 }
 
-#play {
+.buttons { display: flex; gap: 0.6rem; }
+
+#play,
+#drive {
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
@@ -96,7 +99,10 @@ body.rolling #hud { opacity: 0; pointer-events: none; }
   transition: background 0.25s ease, border-color 0.25s ease, opacity 0.8s ease;
 }
 
-body.ready #play { opacity: 1; }
+body.ready .buttons { display: flex; gap: 0.6rem; }
+
+#play,
+#drive { opacity: 1; }
 
 #play:hover {
   background: rgba(255, 255, 255, 0.12);

@@ -174,6 +174,23 @@ export class Score {
     air.connect(airFilter).connect(airGain).connect(this.verb)
     air.start(now)
 
+    // --- engine ---------------------------------------------------------
+    // Silent unless the car is being driven. A lowpassed saw whose pitch and
+    // brightness track speed reads as an engine without being a sample.
+    this.engineOsc = ctx.createOscillator()
+    this.engineOsc.type = 'sawtooth'
+    this.engineOsc.frequency.value = 42
+    this.engineFilter = ctx.createBiquadFilter()
+    this.engineFilter.type = 'lowpass'
+    this.engineFilter.frequency.value = 260
+    this.engineFilter.Q.value = 3.5
+    this.engineGain = ctx.createGain()
+    this.engineGain.gain.value = 0
+    this.engineOsc.connect(this.engineFilter).connect(this.engineGain)
+    this.engineGain.connect(this.master)
+    this.engineGain.connect(this.verb)
+    this.engineOsc.start(now)
+
     this.ready = true
     this.master.gain.setTargetAtTime(0.55, now, 1.4)
     ctx.resume()
@@ -266,6 +283,25 @@ export class Score {
   mute() {
     if (!this.ready) return
     this.master.gain.setTargetAtTime(0.0, this.ctx.currentTime, 0.4)
+  }
+
+  /**
+   * Drive the engine from normalised speed (0..1). Called every frame while
+   * driving, so the ramps are short and the pitch follows the throttle.
+   */
+  engine(speed) {
+    if (!this.ready) return
+    const now = this.ctx.currentTime
+    const s = Math.min(Math.max(speed, 0), 1)
+    this.engineOsc.frequency.setTargetAtTime(40 + s * 78, now, 0.09)
+    this.engineFilter.frequency.setTargetAtTime(240 + s * 900, now, 0.12)
+    this.engineGain.gain.setTargetAtTime(0.05 + s * 0.10, now, 0.12)
+  }
+
+  /** Cut the engine when leaving drive mode. */
+  engineOff() {
+    if (!this.ready) return
+    this.engineGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.25)
   }
 
   /** RMS of what is currently reaching the output. */
