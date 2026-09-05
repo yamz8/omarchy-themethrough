@@ -38,6 +38,20 @@ rather than an edit: consecutive shots differ by at least 30° of view angle or
 a clear change of shot size, and no shot eases to a standstill on a cut — a
 film that stops moving exactly where it cuts feels like it hitched.
 
+### Comparing cuts
+
+Four camera languages over the same word, so they can be judged by watching
+rather than by arguing. `?cut=<name>` picks one:
+
+| | | |
+|---|---|---|
+| `takes` | default | straight tracks and two runs of the route, held at one tempo |
+| `orbit` | `?cut=orbit` | half-turns around the word, the calmest of the four |
+| `ground` | `?cut=ground` | never leaves car height; the word only revealed at the end |
+| `descend` | `?cut=descend` | opens overhead on the whole word and works down to the pictures |
+
+An unknown name falls back to the default.
+
 Letterbox bars slide in for the duration and retract at the end, and a vignette
 and cool lift are laid over the canvas so it reads as graded footage. There is
 no overlay text and no ground grid — the pictures carry it, floating in dark.

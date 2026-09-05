@@ -121,26 +121,27 @@ const AIM_LEAD = 1.15 * (DRIVE_Y - AIM_Y) * Math.sqrt(1 / (TILT_FROM * TILT_FROM
 const OVER = (k = 1) => `over:${k}`
 
 /**
- * The cut.
+ * The cuts.
  *
- * Five long takes rather than eight short ones. The eight-shot version spent
- * five of its shots barely moving — the image crawled at 0.2 to 2.7 px a
- * frame in them against 8+ in the two driving shots, a fortyfold swing in
- * tempo — so the film kept starting and stopping instead of running. These
- * four opening shots sit between 7.1 and 8.5, close enough that the cuts land
- * inside one continuous movement.
+ * Four ways to move the camera over the same word, so they can be compared by
+ * watching rather than by arguing. `?cut=<name>` picks one; `takes` is what
+ * the film plays by default.
  *
- * What makes a shot feel like it moves is sideways travel, not speed. A
- * camera flying straight ahead barely disturbs the middle of frame however
- * fast it goes, which is why the old approach shots read as static; the
- * driving shots felt quick because the route curves and sweeps the picture
- * across. So the staged shots here track along the word rather than into it.
+ * What they share: five or six long takes rather than a scatter of short
+ * ones, every join at least 30 degrees, and no driving shot allowed to get
+ * steep enough to wake the overhead up-vector blend and roll the horizon.
  *
- * `drive` shots ride the written route at car height; the rest are staged
- * moves. Every join changes the view by at least 30 degrees.
+ * What separates them is the vocabulary of the movement itself — straight
+ * tracks, orbits, a camera that never leaves the floor, or one that falls
+ * from overhead to the pictures instead of rising away from them.
  */
-export function buildShots() {
-  return [
+export const CUTS = {
+  /**
+   * Long takes: straight tracks alongside the word and two runs of the route,
+   * at a tempo held between 6.5 and 7.7 px a frame so the cuts land inside one
+   * continuous movement. Ends wide, on the whole word.
+   */
+  takes: () => [
     // Track in: a low run along the word, looking across and slightly ahead.
     // Sideways rather than head-on, so the pictures sweep the frame instead of
     // creeping out of the vanishing point — a camera flying straight forward
@@ -165,11 +166,9 @@ export function buildShots() {
     // Low again, matched to the first drive. The window stops at 0.84 rather
     // than running to the end of the route: the themes out at the Y are the
     // monochrome ones, so the old range spent its last seconds in the grey.
-    // Ending on the most saturated stretch keeps the colour up to the cut.
     { dur: 9.5, ease: 'linear', drive: [0.68, 0.84] },
     // Pull back: open close enough to read the wallpapers as wallpapers, then
-    // rise off them until the whole word lands. The hero and the sign-off as
-    // one reveal instead of two shots that each hold still.
+    // rise off them until the whole word lands.
     //
     // This one is allowed to be slow, and cannot help it: a framing that holds
     // all 81 by 19 of the word sits 66 units up, and at that distance nothing
@@ -179,14 +178,112 @@ export function buildShots() {
       a: { p: V(-4.9, 11.2, 16.3), t: V(-2, 0, 0) },
       b: { p: V(0, OVER(), 0), t: V(0, 0, 0) },
     },
-  ]
+  ],
+
+  /**
+   * Orbit: the camera never travels in a straight line, it swings. Both
+   * staged shots are half-turns around a point in the word, tightening and
+   * dropping as they go, so the piece reads as one long circling movement
+   * interrupted twice by the road.
+   *
+   * The calmest of the four by some way, and unavoidably so: circling a
+   * subject while looking at it holds that subject almost still in frame — you
+   * go around the thing, but the thing does not move. Aiming off the orbit
+   * centre livens it up until the camera swings past the aim point, which
+   * throws a 222 px whip. Stately is the deal.
+   */
+  orbit: () => [
+    { dur: 11.0, ease: 'linear', arc: { c: V(-20, 0, 0), r0: 28, r1: 20, y0: 15, y1: 10, from: 200, to: 380 } },
+    { dur: 11.0, ease: 'linear', drive: [0.30, 0.50], beat: true },
+    { dur: 9.5, ease: 'linear', arc: { c: V(6, 0, 0), r0: 24, r1: 17, y0: 13, y1: 8, from: 60, to: -110 } },
+    { dur: 9.5, ease: 'linear', drive: [0.68, 0.84] },
+    // Lift out of the circle and away, until the word lands whole underneath.
+    {
+      dur: 10.0, ease: 'easeInOut', beat: true,
+      a: { p: V(26, 12, 22), t: V(16, 0, 0) },
+      b: { p: V(0, OVER(), 0), t: V(0, 0, 0) },
+    },
+  ],
+
+  /**
+   * Ground: the camera never leaves the floor. Six passes at car height, the
+   * word only ever glimpsed a few letters at a time, and the single rise held
+   * back to the last shot — so the reveal at the end is the first time anyone
+   * sees what the thing actually spells. The busiest of the four.
+   *
+   * The two route windows are deliberately far apart. Adjacent ones point the
+   * camera the same way and the cut between them collapsed to 15 degrees.
+   */
+  ground: () => [
+    {
+      dur: 9.0, ease: 'linear',
+      a: { p: V(-44, 6, 10), t: V(-36, 0, -3) },
+      b: { p: V(-8, 6, 10), t: V(0, 0, -3) },
+    },
+    { dur: 10.5, ease: 'linear', drive: [0.28, 0.46], beat: true },
+    {
+      dur: 8.0, ease: 'linear',
+      a: { p: V(22, 7, -12), t: V(14, 0, 2) },
+      b: { p: V(-14, 7, -12), t: V(-22, 0, 2) },
+    },
+    { dur: 10.0, ease: 'linear', drive: [0.62, 0.80] },
+    {
+      dur: 6.0, ease: 'linear',
+      a: { p: V(34, 6.5, 9), t: V(26, 0, -4) },
+      b: { p: V(8, 6.5, 9), t: V(0, 0, -4) },
+    },
+    // The only time the camera ever climbs.
+    {
+      dur: 7.5, ease: 'easeInOut', beat: true,
+      a: { p: V(-6, 9, 15), t: V(-2, 0, 0) },
+      b: { p: V(0, OVER(), 0), t: V(0, 0, 0) },
+    },
+  ],
+
+  /**
+   * Descend: the mirror image of `takes`. It opens on the whole word from
+   * overhead and works downward the whole way, finishing close enough to read
+   * a single wallpaper. Says what the thing is in the first second and spends
+   * the rest earning the detail, rather than withholding the shape until the
+   * end.
+   *
+   * Its two high shots are the slowest in any of the cuts and cannot be
+   * otherwise — the framing that holds the whole word is 66 units up, and
+   * nothing moves quickly from there. That is the cost of opening on the
+   * answer.
+   */
+  descend: () => [
+    // Overhead, already whole, traversing and sinking.
+    {
+      dur: 9.5, ease: 'linear',
+      a: { p: V(-32, OVER(1.05), 14), t: V(-26, 0, 0) },
+      b: { p: V(32, OVER(0.82), 8), t: V(26, 0, 0) },
+    },
+    // Down into a raked swing across the middle.
+    { dur: 10.0, ease: 'linear', arc: { c: V(0, 0, 0), r0: 34, r1: 20, y0: 26, y1: 12, from: 250, to: 340 } },
+    { dur: 10.5, ease: 'linear', drive: [0.30, 0.50], beat: true },
+    { dur: 10.0, ease: 'linear', drive: [0.68, 0.84] },
+    // Ends on the pictures rather than on the name.
+    {
+      dur: 11.0, ease: 'easeOut', beat: true,
+      a: { p: V(-40, 13, 24), t: V(-30, 0, 0) },
+      b: { p: V(-4.9, 11.2, 16.3), t: V(-2, 0, 0) },
+    },
+  ],
+}
+
+/** The cut the film plays unless `?cut=` asks for another. */
+export const DEFAULT_CUT = 'takes'
+
+export function buildShots(name = DEFAULT_CUT) {
+  return (CUTS[name] ?? CUTS[DEFAULT_CUT])()
 }
 
 export class Director {
-  constructor(camera) {
+  constructor(camera, cut) {
     this.camera = camera
     this.route = buildRoute()
-    this.shots = buildShots()
+    this.shots = buildShots(cut)
     this.total = this.shots.reduce((a, s) => a + s.dur, 0)
 
     this.playing = false
@@ -213,9 +310,19 @@ export class Director {
     this.playing = false
   }
 
+  /** One height, which may be a viewport-dependent `over:` framing. */
+  resolve(y) {
+    return typeof y === 'string' ? overheadY(this.camera) * Number(y.split(':')[1]) : y
+  }
+
+  /** Blend two heights, either of which may be an `over:` framing. */
+  height(y0, k, y1) {
+    return THREE.MathUtils.lerp(this.resolve(y0), this.resolve(y1 ?? y0), k)
+  }
+
   /** Resolve a keyframe, filling in framings that depend on the viewport. */
   point(v) {
-    const y = typeof v.y === 'string' ? overheadY(this.camera) * Number(v.y.split(':')[1]) : v.y
+    const y = this.resolve(v.y)
     return new THREE.Vector3(v.x, y, v.z)
   }
 
@@ -241,22 +348,34 @@ export class Director {
     for (const d of offsets) acc.add(this.route.getPointAt(Math.min(u + d, 1)))
     acc.divideScalar(offsets.length)
 
-    if (!pos) return acc
-    let dx = acc.x - pos.x
-    let dz = acc.z - pos.z
+    return pos ? this.holdLead(acc, pos, u) : acc
+  }
+
+  /**
+   * Push an aim point out to the minimum lead, in place.
+   *
+   * Applied to the damped aim as well as to the target it chases, because
+   * damping can leave the aim well inside a target that is itself legal — the
+   * clamp only bounds where the aim is heading, not where it currently is. A
+   * route window that folds harder than the two the film uses will otherwise
+   * still roll, which is a guarantee that holds by luck rather than by
+   * construction.
+   */
+  holdLead(aim, pos, u) {
+    let dx = aim.x - pos.x
+    let dz = aim.z - pos.z
     let horiz = Math.hypot(dx, dz)
-    if (horiz < AIM_LEAD) {
-      // Straight down the road if the fold left no usable bearing at all.
-      if (horiz < 1e-3) {
-        const t = this.route.getTangentAt(Math.min(u + 0.01, 1))
-        dx = t.x
-        dz = t.z
-        horiz = Math.hypot(dx, dz) || 1
-      }
-      acc.x = pos.x + (dx / horiz) * AIM_LEAD
-      acc.z = pos.z + (dz / horiz) * AIM_LEAD
+    if (horiz >= AIM_LEAD) return aim
+    // Straight down the road if the fold left no usable bearing at all.
+    if (horiz < 1e-3) {
+      const t = this.route.getTangentAt(Math.min(u + 0.01, 1))
+      dx = t.x
+      dz = t.z
+      horiz = Math.hypot(dx, dz) || 1
     }
-    return acc
+    aim.x = pos.x + (dx / horiz) * AIM_LEAD
+    aim.z = pos.z + (dz / horiz) * AIM_LEAD
+    return aim
   }
 
   /** The still we hold on before the film starts and after it ends. */
@@ -314,8 +433,26 @@ export class Director {
             // Frame-rate independent damping, so the aim eases through bends
             // at the same rate whatever the frame rate.
             this.aim.lerp(desired, 1 - Math.exp(-3.2 * dt))
+            this.holdLead(this.aim, pos, u)
           }
           target = this.aim
+        } else if (shot.arc) {
+          // Swing around a point instead of crossing between two framings.
+          // Lerping a camera between two places on a circle draws the chord,
+          // not the arc, so a sweep of any width cuts through the middle of
+          // the thing it is meant to be going around. Interpolating the angle
+          // is the only way to actually orbit.
+          this.aimLive = false
+          const { c, r0, r1, y0, y1, from, to, t: at } = shot.arc
+          const angle = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(from, to, k))
+          const radius = THREE.MathUtils.lerp(r0, r1 ?? r0, k)
+          const height = this.height(y0, k, y1)
+          pos = new THREE.Vector3(
+            c.x + radius * Math.cos(angle),
+            height,
+            c.z + radius * Math.sin(angle),
+          )
+          target = at ? this.point(at) : c.clone()
         } else {
           this.aimLive = false
           pos = this.point(shot.a.p).lerp(this.point(shot.b.p), k)

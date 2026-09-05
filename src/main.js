@@ -26,7 +26,8 @@ scene.background = BASE_SCENE_COLOR.clone()
 scene.fog = new THREE.Fog(BASE_SCENE_COLOR, 90, 260)
 
 const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.1, 500)
-const director = new Director(camera)
+// `?cut=<name>` swaps the camera language for comparison; see CUTS.
+const director = new Director(camera, new URLSearchParams(location.search).get('cut'))
 
 const ambient = new THREE.AmbientLight(0xffffff, 0.75)
 scene.add(ambient)
