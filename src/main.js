@@ -3,6 +3,7 @@ import themes from './themes.json'
 import { buildLayout, buildSlotGeometry, buildPlainGeometry } from './wordmark.js'
 import { loadTexture, imageUrl } from './textures.js'
 import { Director } from './director.js'
+import { Score } from './score.js'
 import './style.css'
 
 const canvas = document.querySelector('#scene')
@@ -97,16 +98,56 @@ Promise.all(pending).then(() => {
 // --- the film ---
 const playButton = document.querySelector('#play')
 const playLabel = playButton.querySelector('.label')
+// --- sound ---------------------------------------------------------------
+// Silent until asked: browsers block audible autoplay, and starting noise
+// unbidden is worse than starting none. Turning it on joins the score at the
+// current shot rather than restarting the film — no jolt, and the cuts from
+// here on still land together.
+const score = new Score()
+const soundButton = document.querySelector('#sound')
+let soundOn = false
+
+function paintSoundButton() {
+  soundButton.setAttribute('aria-pressed', String(soundOn))
+  soundButton.querySelector('.word').textContent = soundOn ? 'sound on' : 'sound'
+}
+
+soundButton.addEventListener('click', () => {
+  if (soundOn) {
+    soundOn = false
+    score.mute()
+    paintSoundButton()
+    return
+  }
+  try {
+    score.start()
+    const i = Math.max(director.shotIndex, 0)
+    score.setShot(i, director.shots[i])
+    score.resume()
+    soundOn = true
+  } catch {
+    // No audio device, or the context was refused — the film is fine silent.
+    soundOn = false
+  }
+  paintSoundButton()
+})
+
+director.onShot = (shot, i) => {
+  if (soundOn) score.setShot(i, shot)
+}
+
 director.onEnd = () => {
   // Stay on the closing frame; only the letterbox retracts.
   document.body.classList.remove('rolling')
   playLabel.textContent = 'replay'
+  if (soundOn) score.release()
 }
 
 function roll() {
   playLabel.textContent = 'replay'
   document.body.classList.add('rolling')
   director.play()
+  if (soundOn) score.resume()
 }
 
 playButton.addEventListener('click', roll)
@@ -120,6 +161,9 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
+
+// A handle for inspecting or tweaking playback from the console.
+window.themethrough = { director, score }
 
 // --- loop ---
 renderer.setAnimationLoop(() => {

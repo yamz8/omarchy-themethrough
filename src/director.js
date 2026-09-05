@@ -160,6 +160,7 @@ export class Director {
     this.aimLive = false
     this.lastFrame = 0
 
+    this.onShot = () => {}
     this.onEnd = () => {}
   }
 
@@ -228,6 +229,7 @@ export class Director {
         if (i !== this.shotIndex) {
           this.shotIndex = i
           cut = true
+          this.onShot(shot, i)
         }
         const k = (EASES[shot.ease] ?? linear)(Math.min(time / shot.dur, 1))
 

@@ -29,6 +29,33 @@ no overlay text and no ground grid — the pictures carry it, floating in dark.
 Shot timings run on wall-clock time rather than accumulated frame deltas, so a
 throttled or backgrounded tab can't fall behind the cut.
 
+## Sound
+
+The score is **synthesised, not sampled** — no audio file, no licensing, a few
+KB of code — and it is driven by the same shot list as the camera. The director
+calls into it on every cut, so the music lands *with* the picture rather than
+near it; a pre-scheduled track would have to be kept in sync, this cannot come
+apart.
+
+- a **pad** of two detuned saws per voice through a soft lowpass, gliding to a
+  new chord on each cut rather than jumping
+- the progression opens and closes on the minor root, lifting to the major
+  fourth and fifth under the two reveals
+- a **sub** that swells under the driving shots, so the low passes feel quick
+- a **filtered noise sweep** on every cut, and a soft **low impact** on the two
+  shots that actually reveal something
+- generous convolution reverb from a generated impulse — most of what makes it
+  sound like a room rather than a synth
+
+It is **silent until asked**. Browsers block audible autoplay, and starting
+noise unbidden is worse than starting none, so the film opens quiet with a
+`sound` toggle in the corner. Turning it on joins the score at the current
+shot rather than restarting the film.
+
+`window.themethrough` exposes `{ director, score }`; `score.level()` reports
+the RMS reaching the output, which is how the mix was checked rather than
+assumed.
+
 ## How it works
 
 The wordmark is pixel art on an **81 × 19** grid. `tools/generate-assets.js`
