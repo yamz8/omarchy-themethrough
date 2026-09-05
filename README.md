@@ -14,13 +14,18 @@ from one framing to another, with the camera jumping between them so the joins
 read as edits:
 
 1. **Cold open** — down among the pictures, drifting, before you know what it is
-2. **Low move** — still down among them, crossing the M
+2. **Low move** — still down among them, swung across the M
 3. **The drive** — the written route, through the middle of the word
 4. **Break out** — rise off the surface and let the whole shape land
-5. **Overhead** — drifting slowly across the word
+5. **Overhead** — raked and closer, drifting across the word
 6. **Low again** — over the brightest stretch
 7. **Hero** — the three-quarter push-in
 8. **Sign-off** — settle overhead and hold on the name
+
+The joins are held to two rules, because breaking either one reads as a fault
+rather than an edit: consecutive shots differ by at least 30° of view angle or
+a clear change of shot size, and no shot eases to a standstill on a cut — a
+film that stops moving exactly where it cuts feels like it hitched.
 
 Letterbox bars slide in for the duration and retract at the end, and a vignette
 and cool lift are laid over the canvas so it reads as graded footage. There is

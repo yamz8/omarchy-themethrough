@@ -93,6 +93,13 @@ function buildRoute() {
 const V = (x, y, z) => new THREE.Vector3(x, y, z)
 
 /**
+ * Framing height for the overhead shots: `OVER()` fits the whole word in,
+ * `OVER(k)` a fraction of that height, so two overhead framings can differ by
+ * shot size rather than only by position.
+ */
+const OVER = (k = 1) => `over:${k}`
+
+/**
  * The cut. Each shot is a move from one framing to another; the camera jumps
  * between shots, so the joins read as edits rather than one endless glide.
  *
@@ -107,25 +114,28 @@ export function buildShots() {
       a: { p: V(L.O - 15, 2.5, 9), t: V(L.O - 4, 0.6, 3) },
       b: { p: V(L.O - 2, 2.9, 6), t: V(L.O + 9, 0.6, 1) },
     },
-    // Title, still low, still moving.
+    // Title, still low, still moving — but swung across the word rather than
+    // along it, so the cut off the cold open is a change of angle.
     {
       dur: 5.0, ease: 'linear',
-      a: { p: V(L.M - 9, 3.2, 10), t: V(L.M, 0.6, 2) },
-      b: { p: V(L.M + 4, 3.6, 7), t: V(L.M + 13, 0.6, 0) },
+      a: { p: V(L.M - 11, 3.4, 14), t: V(L.M + 3, 0.6, -6) },
+      b: { p: V(L.M + 2, 3.9, 11), t: V(L.M + 16, 0.6, -9) },
     },
     // The drive: the route as written, through the middle of the word.
     { dur: 9.5, ease: 'linear', drive: [0.31, 0.47] },
-    // Break out: rise off the surface and let the whole shape land.
+    // Break out: rise off the surface and let the whole shape land. Eased out
+    // only — it has to be moving on the cut in, and settle on the way out.
     {
-      dur: 5.5, ease: 'easeInOut',
+      dur: 5.5, ease: 'easeOut',
       a: { p: V(L.R, 7, 16), t: V(L.R + 6, 0.5, 2) },
-      b: { p: V(0, 'over', 0), t: V(0, 0, 0) },
+      b: { p: V(0, OVER(), 0), t: V(0, 0, 0) },
     },
-    // Overhead, drifting slowly across the word.
+    // Drifting across the word — raked and closer, so cutting off the plumb
+    // overhead that ends the break out reads as an edit and not a skip.
     {
       dur: 5.5, ease: 'linear',
-      a: { p: V(-13, 'over', 0), t: V(-13, 0, 0) },
-      b: { p: V(13, 'over', 0), t: V(13, 0, 0) },
+      a: { p: V(-13, OVER(0.72), 24), t: V(-13, 0, -6) },
+      b: { p: V(13, OVER(0.72), 24), t: V(13, 0, -6) },
     },
     // Low again, over the brightest stretch of the word.
     { dur: 7.5, ease: 'linear', drive: [0.73, 0.86] },
@@ -135,11 +145,12 @@ export function buildShots() {
       a: { p: V(-6, 40, 78), t: V(0, 0, 4) },
       b: { p: V(0, 31, 60), t: V(0, 0, 0) },
     },
-    // Settle overhead and hold on the name.
+    // Settle overhead and hold on the name. Moving on the cut, so the film
+    // does not stall on both sides of its last join.
     {
-      dur: 6.5, ease: 'easeInOut',
-      a: { p: V(0, 'over', 26), t: V(0, 0, 3) },
-      b: { p: V(0, 'over', 0), t: V(0, 0, 0) },
+      dur: 6.5, ease: 'easeOut',
+      a: { p: V(0, OVER(), 26), t: V(0, 0, 3) },
+      b: { p: V(0, OVER(), 0), t: V(0, 0, 0) },
     },
   ]
 }
@@ -177,7 +188,7 @@ export class Director {
 
   /** Resolve a keyframe, filling in framings that depend on the viewport. */
   point(v) {
-    const y = v.y === 'over' ? overheadY(this.camera) : v.y
+    const y = typeof v.y === 'string' ? overheadY(this.camera) * Number(v.y.split(':')[1]) : v.y
     return new THREE.Vector3(v.x, y, v.z)
   }
 
