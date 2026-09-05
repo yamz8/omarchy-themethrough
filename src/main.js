@@ -14,21 +14,23 @@ renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.outputColorSpace = THREE.SRGBColorSpace
 
+const BASE_SCENE_COLOR = new THREE.Color(0x06070a)
+const WHITE = new THREE.Color(0xffffff)
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0x06070a)
-scene.fog = new THREE.Fog(0x06070a, 90, 260)
+scene.background = BASE_SCENE_COLOR.clone()
+scene.fog = new THREE.Fog(BASE_SCENE_COLOR, 90, 260)
 
 const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.1, 500)
 const director = new Director(camera)
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.75))
+const ambient = new THREE.AmbientLight(0xffffff, 0.75)
+scene.add(ambient)
 const key = new THREE.DirectionalLight(0xffffff, 0.95)
 key.position.set(-30, 40, 20)
 scene.add(key)
 
-// Two grounds. The film gets an endless plane; drive mode gets a disc, because
-// a cliff needs a real edge — and that edge showed as a horizon curve in the
-// film's wide hero shot when the disc was used for both.
+// Two grounds. The film gets an endless plane; drive mode gets a large disc
+// hidden behind the closed cave chambers, so the mountain world has no horizon.
 const ground = new THREE.MeshStandardMaterial({ color: 0x0a0c11, roughness: 1, metalness: 0 })
 
 const floorPlane = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), ground)
@@ -42,23 +44,13 @@ floorDisc.position.y = -0.02
 floorDisc.visible = false
 scene.add(floorDisc)
 
-// A faint lip, so the drop reads as an edge and not as the render ending.
-const rim = new THREE.Mesh(
-  new THREE.RingGeometry(RIM - 0.9, RIM, 96),
-  new THREE.MeshBasicMaterial({ color: 0x2b3444, toneMapped: false, side: THREE.DoubleSide }),
-)
-rim.rotation.x = -Math.PI / 2
-rim.position.y = 0.01
-rim.visible = false
-scene.add(rim)
-
 // --- build the wordmark ---
 const clusters = buildLayout(themes)
 const wordGroup = new THREE.Group()
 const imageMaterials = []
 const pending = []
 
-// Every loaded texture, keyed by theme, so the tunnels can clad their walls
+// Every loaded texture, keyed by theme, so the tunnels can line their bores
 // from the same images without fetching anything twice.
 const themeTextures = new Map(themes.map((t) => [t.name, new Array(t.images.length).fill(null)]))
 
@@ -120,7 +112,9 @@ Promise.all(pending).then(() => {
   document.body.classList.add('ready', 'lit')
   // Autoplay: the page is the film, so it starts itself once the last
   // background is in. The fade-up covers the first frame.
-  setTimeout(() => roll(), 700)
+  // The drive control is already live during the fade. Do not let the delayed
+  // autoplay restart the film behind drive mode if it is clicked in that gap.
+  setTimeout(() => { if (!driving) roll() }, 700)
 })
 
 // --- the film ---
@@ -201,6 +195,55 @@ const input = { throttle: 0, steer: 0, brake: false }
 const held = new Set()
 let driving = false
 
+const themeReveal = document.querySelector('#theme-reveal')
+const caveTheme = document.querySelector('#cave-theme')
+const caveMood = document.querySelector('#cave-mood')
+const themeCommand = document.querySelector('#theme-command')
+const copyTheme = document.querySelector('#copy-theme')
+let revealedTheme = ''
+let copyReset = 0
+
+const caveLooks = new Map(themes.map((theme) => {
+  const accent = new THREE.Color(theme.accent)
+  const fog = new THREE.Color(theme.bg)
+  if (theme.mode === 'light') fog.multiplyScalar(0.16)
+  else fog.lerp(accent, 0.12).multiplyScalar(0.58)
+  return [theme.name, {
+    fog,
+    light: accent.clone().lerp(new THREE.Color(0xffffff), 0.28),
+    ambient: accent.clone().lerp(new THREE.Color(0xffffff), 0.62),
+  }]
+}))
+
+function titleCaseTheme(name) {
+  return name.split('-').map((word) => word[0].toUpperCase() + word.slice(1)).join(' ')
+}
+
+function showThemeChamber(cave) {
+  const visible = cave?.progress > 0.76
+  document.body.classList.toggle('at-theme-chamber', visible)
+  themeReveal.setAttribute('aria-hidden', String(!visible))
+  if (!visible || revealedTheme === cave.theme.name) return
+
+  revealedTheme = cave.theme.name
+  caveTheme.textContent = titleCaseTheme(cave.theme.name)
+  caveMood.textContent = cave.style.label
+  themeCommand.textContent = `omarchy theme set ${cave.theme.name}`
+  copyTheme.textContent = 'copy command'
+}
+
+copyTheme.addEventListener('click', async () => {
+  const command = themeCommand.textContent
+  try {
+    await navigator.clipboard.writeText(command)
+    copyTheme.textContent = 'copied'
+  } catch {
+    copyTheme.textContent = 'copy failed'
+  }
+  clearTimeout(copyReset)
+  copyReset = setTimeout(() => { copyTheme.textContent = 'copy command' }, 1800)
+})
+
 // A little fill light, so the car reads as a solid object against a scene lit
 // almost entirely for flat, unlit picture tiles.
 const carLight = new THREE.DirectionalLight(0xffffff, 1.1)
@@ -230,6 +273,20 @@ function readInput() {
   input.brake = held.has('Space')
 }
 
+function updateCaveExperience(cave, dt) {
+  const inside = Boolean(cave && cave.progress > 0.02)
+  const look = inside ? caveLooks.get(cave.theme.name) : null
+  const k = 1 - Math.exp(-2.6 * dt)
+
+  scene.background.lerp(look?.fog ?? BASE_SCENE_COLOR, k)
+  scene.fog.color.lerp(look?.fog ?? BASE_SCENE_COLOR, k)
+  scene.fog.near = THREE.MathUtils.lerp(scene.fog.near, inside ? 24 : 90, k)
+  scene.fog.far = THREE.MathUtils.lerp(scene.fog.far, inside ? 118 : 260, k)
+  carLight.color.lerp(look?.light ?? WHITE, k)
+  ambient.color.lerp(look?.ambient ?? WHITE, k)
+  showThemeChamber(cave)
+}
+
 function setDriving(on) {
   // Built before anything is shown: on the first entry the group does not yet
   // exist, so setting visibility ahead of this left the tunnels hidden.
@@ -240,7 +297,6 @@ function setDriving(on) {
   document.body.classList.toggle('rolling', false)
   car.root.visible = on
   carLight.visible = on
-  rim.visible = on
   floorDisc.visible = on
   floorPlane.visible = !on
   if (tunnels) tunnels.group.visible = on
@@ -259,6 +315,14 @@ function setDriving(on) {
     held.clear()
     playLabel.textContent = 'replay'
     score.engineOff()
+    revealedTheme = ''
+    showThemeChamber(null)
+    scene.background.copy(BASE_SCENE_COLOR)
+    scene.fog.color.copy(BASE_SCENE_COLOR)
+    scene.fog.near = 90
+    scene.fog.far = 260
+    carLight.color.set(0xffffff)
+    ambient.color.set(0xffffff)
   }
 }
 
@@ -302,6 +366,8 @@ renderer.setAnimationLoop(() => {
     carLight.position.set(car.pos.x + 6, 14, car.pos.z + 8)
     carLight.target.position.copy(car.pos)
     carLight.target.updateMatrixWorld()
+
+    updateCaveExperience(tunnels.locate(car.pos), dt)
 
     if (soundOn) score.engine(Math.abs(car.speed) / 20)
   } else {

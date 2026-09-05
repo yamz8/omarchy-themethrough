@@ -47,28 +47,30 @@ because the image tiles are unlit and a lamp would not touch them.
 
 ### Tunnels
 
-One tunnel per theme, radiating out from the wordmark. Walls and ceiling are
-clad in that theme's backgrounds, with a strip of its `accent` underfoot. Each
-tunnel ends at the rim of the ground — a cliff — and beyond the drop the whole
-theme hangs in the void on an arc facing back down the tunnel, so arriving at
-the edge is the reveal.
+One cave per theme radiates through a mountain ring around the wordmark. The car
+starts in the open basin, surrounded by low-poly peaks and twenty-two jagged
+stone portals. Crossing a mouth takes you into a faceted round arch lined with
+that theme's backgrounds and grounded by its own colour.
 
-Panel height matches the panel pitch so each wall image stays square; the
-backgrounds are 1:1 and stretching them to a taller wall was obvious. The
-gallery sits low and fanned so it is already framed by the tunnel mouth on the
-approach rather than hidden above the ceiling.
+The caves are nearly three times the original length. They breathe subtly in
+and out as they run, and their proportions, facet count, image weave, rock
+profile, atmosphere and accent details are deterministically keyed to the
+theme. Interiors split into glowing ribs, suspended orbs, lantern-like beacons,
+crystal spires and monolithic columns, so the change is structural as well as a
+palette swap.
 
-The corridors are walls, not decoration: past the mouths the car can only
-continue where a tunnel actually is, and it is held just short of the cliff
-rather than driven off it. Inside the ring of mouths it roams free.
+There is no cliff. Each road stops inside a closed gallery chamber with every
+background from that theme arranged on the end wall. On the final approach a
+terminal card reveals the real Omarchy switch command —
+`omarchy theme set <theme-name>` — with a one-click copy button.
 
-Two grounds exist. The film uses an endless plane, drive mode a disc — a cliff
-needs a real edge, and that edge showed as a horizon curve in the film's wide
-hero shot when the disc was used for both.
+The caves are walls, not decoration: past the mouths the car can only continue
+through a real opening. The film retains its endless ground, while drive mode
+uses a larger disc whose edge stays hidden behind the chamber walls.
 
-All 22 tunnels share one quad geometry and one material per image, and only the
-tunnel you are inside survives frustum culling: drive mode costs 76 draw calls
-against the film's 66.
+The hundreds of bore facets are merged into one mesh per background, repeated
+details use instancing, materials are shared with the chamber panels, and
+frustum culling drops caves outside the chase camera's view.
 
 Handling is scaled to the world rather than to a road — the wordmark is only 81
 units long, and at a realistic top speed you cross the whole thing in a couple
