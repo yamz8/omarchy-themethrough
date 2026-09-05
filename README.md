@@ -19,7 +19,7 @@ read as edits:
 4. **Break out** — rise off the surface and let the whole shape land
 5. **Overhead** — raked and closer, drifting across the word
 6. **Low again** — over the brightest stretch
-7. **Hero** — the three-quarter push-in
+7. **Hero** — the three-quarter push-in, taken across the diagonal
 8. **Sign-off** — settle overhead and hold on the name
 
 The joins are held to two rules, because breaking either one reads as a fault

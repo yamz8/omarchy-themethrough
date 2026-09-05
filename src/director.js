@@ -139,11 +139,16 @@ export function buildShots() {
     },
     // Low again, over the brightest stretch of the word.
     { dur: 7.5, ease: 'linear', drive: [0.73, 0.86] },
-    // Hero: the three-quarter push-in.
+    // Hero: the three-quarter push-in. Taken from a corner rather than square
+    // on, because the word is 81 long and 19 deep — viewed head-on it is a
+    // thin bright band in an empty frame, whatever the distance. Across the
+    // diagonal it runs corner to corner and the pictures are legible. The aim
+    // sits off the word's centre: perspective, not symmetry, decides where a
+    // shape lands in frame.
     {
       dur: 6.0, ease: 'easeOut',
-      a: { p: V(-6, 40, 78), t: V(0, 0, 4) },
-      b: { p: V(0, 31, 60), t: V(0, 0, 0) },
+      a: { p: V(47.8, 45.6, 33.5), t: V(22.4, 0, -10.9) },
+      b: { p: V(45.9, 35.0, 32.1), t: V(23.0, 0, -9.7) },
     },
     // Settle overhead and hold on the name. Moving on the cut, so the film
     // does not stall on both sides of its last join.
