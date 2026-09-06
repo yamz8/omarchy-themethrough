@@ -319,6 +319,12 @@ function setDriving(on) {
     const c = car.chase()
     chaseEye.copy(c.pos)
     chaseAim.copy(c.target)
+    // Come back up first. Driving is nearly always entered from the end of
+    // the film, and the film ends by running the outro, which ramps the master
+    // gain to zero — so without this the car is silent, engine included, since
+    // the engine is routed through that same master. Setting a chord on a
+    // muted bus changes nothing you can hear.
+    score.resume()
     // Borrow a driving shot's voicing, since that is what the car is doing.
     // Found rather than numbered: the cut list is re-cut from time to time.
     const i = director.shots.findIndex((s) => s.drive)
